@@ -53,7 +53,7 @@ class TransportRequests(TransportBase):
             res = self.session.request(method, url, params=params, data=data,headers = {'content-type': 'application/json'})
             if res.status_code == 404:
                 raise ConnectionError("404 - {}".format(res.url))
-			if res.status_code == 401:
+            if res.status_code == 401:
                 raise ConnectionError("401 - {}".format(res.url))
             elif res.status_code == 500:
                 raise SolrError("500 - " + res.url + " "+res.text)
