@@ -1,7 +1,8 @@
+import os
 test_config = {
-    'SOLR_SERVER': ['http://localhost:7050/solr','http://localhost:7020/solr'],
+    'SOLR_SERVER': [os.environ.get('SOLR_TEST_URL')],
     'SOLR_COLLECTION': 'SolrClient_unittest',
-    'SOLR_CREDENTIALS': ('user','pass'),
+    'SOLR_CREDENTIALS': (os.environ.get('SOLR_TEST_USER'),os.environ.get('SOLR_TEST_PASS')),
     'collections':{
         'fields':[
             {'name':'product_name','stored':True,'indexed':True,'type':'text_en'},

@@ -12,7 +12,7 @@ class ClientTestQuery(unittest.TestCase):
     
     @classmethod
     def setUpClass(self):
-        self.solr = SolrClient(test_config['SOLR_SERVER'][0],devel=True)
+        self.solr = SolrClient(test_config['SOLR_SERVER'][0],devel=True,auth=test_config['SOLR_CREDENTIALS'])
         self.rand_docs = RandomTestData()
         self.docs = self.rand_docs.get_docs(50)
         self.solr.delete_doc_by_id(test_config['SOLR_COLLECTION'],'*')
