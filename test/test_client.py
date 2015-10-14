@@ -84,7 +84,8 @@ class ClientTestIndexing(unittest.TestCase):
             os.remove('temp_file.json')
         except:
             pass
-        
+            
+    @unittest.skip("Don't test remote indexing in travis")
     def test_index_json_file(self):
         self.docs = self.rand_docs.get_docs(61)
         with open('temp_file.json','w') as f:
