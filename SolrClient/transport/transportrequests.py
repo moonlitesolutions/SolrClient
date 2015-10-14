@@ -52,7 +52,7 @@ class TransportRequests(TransportBase):
         try:
             res = self.session.request(method, url, params=params, data=data,headers = {'content-type': 'application/json'})
             if res.status_code == 404:
-                raise ConnectionError("404 - {}".format(res.url))            
+                raise ConnectionError("404 - {}".format(res.url))
 			if res.status_code == 401:
                 raise ConnectionError("401 - {}".format(res.url))
             elif res.status_code == 500:
