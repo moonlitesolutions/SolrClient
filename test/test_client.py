@@ -72,7 +72,7 @@ class ClientTestIndexing(unittest.TestCase):
     def test_stream_file_gzip_file(self):
         self.docs = self.rand_docs.get_docs(60)
         with gzip.open('temp_file.json.gz','wb') as f:
-            f.write(bytes(json.dump(self.docs)))
+            f.write(bytes(json.dumps(self.docs)))
         r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
         self.commit()
         r = self.solr.query(test_config['SOLR_COLLECTION'],{'q':'*:*'})
