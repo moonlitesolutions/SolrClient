@@ -132,20 +132,8 @@ class SolrClient:
         '''
         filename = os.path.abspath(filename)
         self.logger.info("Indexing {} into Solr Collection {}".format(filename,collection))
-        jsonfile = ''
-        gzipped = False
-        if filename.endswith('.gz'):
-            self.logger.debug("Uncompressing {}".format(filename))
-            jsonfile = filename.replace('.gz','')
-            os.system("gunzip {}".format(filename))
-            gzipped = True
-        else:
-            jsonfile = filename
             
-        data = {'stream.file' : jsonfile,
+        data = {'stream.file' : filename,
                 'stream.contentType' : 'text/json'}
         res = self.transport.send_request(method='GET', endpoint='update/json', collection=collection, params=data, *kwargs)
-        if gzipped:
-            logging.debug("Compressing {}".format(jsonfile))
-            os.system("gzip {}".format(jsonfile))
         return res
