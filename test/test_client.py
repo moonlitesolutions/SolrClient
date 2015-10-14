@@ -63,11 +63,11 @@ class ClientTestIndexing(unittest.TestCase):
         self.assertEqual(r.get_num_found(),len(self.docs))
         self.delete_docs()
         self.commit()
-		try:
-			os.remove('temp_file.json.gz')
-			os.remove('temp_file.json')
-		except:
-			pass
+        try:
+            os.remove('temp_file.json.gz')
+            os.remove('temp_file.json')
+        except:
+            pass
     
     def test_stream_file_gzip_file(self):
         self.docs = self.rand_docs.get_docs(60)
@@ -79,11 +79,11 @@ class ClientTestIndexing(unittest.TestCase):
         self.assertEqual(r.get_num_found(),len(self.docs))
         self.delete_docs()
         self.commit()
-		try:
-			os.remove('temp_file.json.gz')
-			os.remove('temp_file.json')
-		except:
-			pass
+        try:
+            os.remove('temp_file.json.gz')
+            os.remove('temp_file.json')
+        except:
+            pass
         
     def test_index_json_file(self):
         self.docs = self.rand_docs.get_docs(61)
@@ -95,11 +95,11 @@ class ClientTestIndexing(unittest.TestCase):
         self.assertEqual(r.get_num_found(),len(self.docs))
         self.delete_docs()
         self.commit()
-		try:
-			os.remove('temp_file.json.gz')
-			os.remove('temp_file.json')
-		except:
-			pass
+        try:
+            os.remove('temp_file.json.gz')
+            os.remove('temp_file.json')
+        except:
+            pass
     
     def test_stream_file_gzip_file(self):
         self.docs = self.rand_docs.get_docs(62)
@@ -111,13 +111,13 @@ class ClientTestIndexing(unittest.TestCase):
         self.assertEqual(r.get_num_found(),len(self.docs))
         self.delete_docs()
         self.commit()
-		try:
-			os.remove('temp_file.json.gz')
-			os.remove('temp_file.json')
-		except:
-			pass
-			
-			
+        try:
+            os.remove('temp_file.json.gz')
+            os.remove('temp_file.json')
+        except:
+            pass
+            
+            
 if __name__=='__main__':
     pass
   
