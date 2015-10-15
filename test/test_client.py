@@ -7,7 +7,7 @@ from time import sleep
 from SolrClient import SolrClient
 from .test_config import test_config
 from .RandomTestData import RandomTestData
-logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+
 
 class ClientTestIndexing(unittest.TestCase):
     #High Level Client Tests
@@ -20,12 +20,12 @@ class ClientTestIndexing(unittest.TestCase):
         
         for field in test_config['collections']['copy_fields']:
             try:
-                self.solr.collections.delete_copy_field(test_config['SOLR_COLLECTION'],field)
+                self.solr.schema.delete_copy_field(test_config['SOLR_COLLECTION'],field)
             except:
                 pass
         for field in test_config['collections']['fields']:
             try:
-                self.solr.collections.create_field(test_config['SOLR_COLLECTION'],field)
+                self.solr.schema.create_field(test_config['SOLR_COLLECTION'],field)
             except:
                 pass
                 
@@ -72,7 +72,7 @@ class ClientTestIndexing(unittest.TestCase):
     def test_stream_file_gzip_file(self):
         self.docs = self.rand_docs.get_docs(60)
         with gzip.open('temp_file.json.gz','wb') as f:
-            f.write(bytes(json.dumps(self.docs)))
+            f.write(json.dumps(self.docs).encode('utf-8'))
         r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
         self.commit()
         r = self.solr.query(test_config['SOLR_COLLECTION'],{'q':'*:*'})

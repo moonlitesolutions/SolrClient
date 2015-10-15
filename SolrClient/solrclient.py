@@ -10,20 +10,14 @@ from .solrresp import SolrResponse
 class SolrClient:
     '''
     
-    Creates a new SolrClient, arguments are1:
+    Creates a new SolrClient.
     
     :param host: Specifies the location of Solr Server. ex 'http://localhost:8983/solr'. Can also take a list of host values in which case it will use the first server specified, but will switch over to the second one if the first one is not available. 
     :param transport: Transport class to use. So far only requests is supported. 
     :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level. 
     '''
-    def __init__(self, host, transport=TransportRequests,devel=False,auth=None):
-        '''
-
-        Creates a new SolrClient, arguments are2:
-        :param host: Specifies the location of Solr Server. ex 'http://localhost:8983/solr'. Can also take a list of host values in which case it will use the first server specified, but will switch over to the second one if the first one is not available. 
-        :param transport: Transport class to use. So far only requests is supported. 
-        :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level. 
-        '''
+    def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests,devel=False,auth=None):
+  
         self.devel = devel
         self.host = host
         
@@ -88,7 +82,12 @@ class SolrClient:
         :param str collection: The name of the collection for the request.
         :param data str data: Valid Solr JSON as a string. ex: '[{"title": "testing solr indexing", "id": "test1"}]'
         
-        Sends supplied json to solr for indexing. 
+        Sends supplied json to solr for indexing, supplied JSON must be a list of dictionaries.  ::
+        
+            >>> docs = [{'id':'changeme','field1':'value1'},
+                        {'id':'changeme1','field2':'value2'}]
+            >>> solr.index_json('SolrClient_unittest',json.dumps(docs))
+            
         '''
         return self.transport.send_request(method='POST',endpoint='update',collection=collection, data=data,params=params,*kwargs)
         
@@ -97,7 +96,10 @@ class SolrClient:
         :param str collection: The name of the collection for the request
         :param str id: ID of the document to be deleted. Can specify '*' to delete everything. 
         
-        Deletes items from Solr based on the ID. 
+        Deletes items from Solr based on the ID. ::
+            
+            >>> solr.delete_doc_by_id('SolrClient_unittest','changeme')
+        
         '''
         temp = {"delete": {"query":"id:{}".format(id)}}
         return self.transport.send_request(method='POST', endpoint='update', collection=collection, data=json.dumps(temp), *kwargs)
@@ -109,6 +111,11 @@ class SolrClient:
         :param str filename: Filename of json file to index. 
         
         Will open the json file, uncompressing it if necessary, and submit it to specified solr collection for indexing. 
+        ::
+        
+            >>> solr.local_index('SolrClient_unittest',
+                                       '/local/to/script/temp_file.json')
+        
         '''
         import os
         if os.path.isfile(filename):
@@ -128,7 +135,12 @@ class SolrClient:
         :param str collection: The name of the collection for the request
         :param str filename: String file path of the file to index. 
         
-        Will index specified file into Solr. The `file` must be local to the server, this is faster than other indexing options. If the files are already on the servers I suggest you use this. 
+        Will index specified file into Solr. The `file` must be local to the server, this is faster than other indexing options. 
+        If the files are already on the servers I suggest you use this. 
+        For example::
+        
+            >>> solr.local_index('SolrClient_unittest',
+                                       '/local/to/server/temp_file.json')
         '''
         filename = os.path.abspath(filename)
         self.logger.info("Indexing {} into Solr Collection {}".format(filename,collection))

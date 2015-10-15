@@ -3,7 +3,11 @@ import json
 
 class Schema():
     '''
-        Manages Solr Collections
+        Class for interacting with Solr collections that are using data driven schemas. 
+        At this point there are basic methods for creating/deleting fields, contributions to this class are very welcome. 
+        
+        More info on Solr can be found here: https://cwiki.apache.org/confluence/display/solr/Schema+API
+        
     '''
     def __init__(self,solr):
         self.solr = solr
@@ -18,7 +22,6 @@ class Schema():
     def get_schema_fields(self, collection):
         '''
         Returns Schema Fields from a Solr Collection 
-        : collection = name of the colleciton to pull schema from
         '''
         return self.solr.transport.send_request(endpoint='schema/fields',collection=collection)
         
@@ -29,11 +32,16 @@ class Schema():
 
     def create_field(self, collection, field_dict):
         '''
-        Creates a new field in managed schema. field_dict should look like this::
+        Creates a new field in managed schema, will raise ValueError if the field already exists.  field_dict should look like this::
+        
             {
-             "name":"sell-by",
-             "type":"tdate",
-             "stored":true }
+                 "name":"sell-by",
+                 "type":"tdate",
+                 "stored":True
+            }
+        
+        Reference: https://cwiki.apache.org/confluence/display/solr/Defining+Fields
+             
         '''
         if self.does_field_exist(collection,field_dict['name']):
             raise ValueError("Field {} Already Exists in Solr Collection {}".format(field_dict['name'],collection))
@@ -42,9 +50,12 @@ class Schema():
 
         
     def delete_field(self,collection,field_name):
-        """
-        Deletes a field from the Solr Collection
-        """
+        '''
+        Deletes a field from the Solr Collection. Will raise ValueError if the field doesn't exist. 
+        
+        :param string collection: Name of the collection for the action
+        :param string field_name: String name of the field. 
+        '''
         if not self.does_field_exist(collection,field_name):
             raise ValueError("Field {} Doesn't Exists in Solr Collection {}".format(field_name,collection))
         else:
@@ -53,16 +64,44 @@ class Schema():
 
             
     def does_field_exist(self,collection,field_name):
+        '''
+        Checks if the field exists will return a boolean True (exists) or False(doesn't exist). 
+        
+        :param string collection: Name of the collection for the action
+        :param string field_name: String name of the field. 
+        '''
         schema = self.get_schema_fields(collection)
         return True if field_name in [field['name'] for field in schema['fields']] else False
     
     def create_copy_field(self,collection,copy_dict):
+        '''
+        Creates a copy field. 
+           
+        copy_dict should look like ::
+        
+            {'source':'source_field_name','dest':'destination_field_name'}
+
+        :param string collection: Name of the collection for the action
+        :param dict copy_field: Dictionary of field info
+
+        Reference: https://cwiki.apache.org/confluence/display/solr/Schema+API#SchemaAPI-AddaNewCopyFieldRule
+        '''
         temp = {"add-copy-field":dict(copy_dict)}
         return self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
         
  
     def delete_copy_field(self,collection,copy_dict):
-        temp = {"delete_copy_field":dict(copy_dict)}
+        '''
+        Deletes a copy field. 
+           
+        copy_dict should look like ::
+        
+            {'source':'source_field_name','dest':'destination_field_name'}
+        
+        :param string collection: Name of the collection for the action
+        :param dict copy_field: Dictionary of field info
+        '''
+        temp = {"delete-copy-field":dict(copy_dict)}
         return self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
     
     def get_schema_copyfields(self,collection):

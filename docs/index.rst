@@ -28,12 +28,12 @@ Getting Started
 Basic usage: ::
 
 	>>> from SolrClient import SolrClient
-	>>> solr = SolrClient('http://localhost:7050/solr')
+	>>> solr = SolrClient('http://localhost:8983/solr')
 	>>> res = solr.query('SolrClient_unittest',{
                 'q':'product_name:Lorem',
                 'facet':True,
                 'facet.field':'facet_test',
-        })... ... ... ...
+        })
 	>>> res.get_results_count()
 	4
 	>>> res.get_facets()
@@ -45,19 +45,29 @@ Basic usage: ::
 
 See, easy.... you just need to know the Solr query syntax. 
 
-Submodules
+Components
 ----------
-:doc:`/SolrClient`
-~~~~~~~~~~~~~~~~~~
-:doc:`/SolrResponse`
-~~~~~~~~~~~~~~~~~~~~
+.. toctree::
+   :maxdepth: 1
+
+   Solr Client <SolrClient>
+   Solr Response <SolrResponse>
+   Schema <Schema>
+
 
 Roadmap
 -------
+* Better test coverage
 * HTTPS Support
 * urllib support
 * Collection Alias Management
 * Collection Re-indexing with cursor mark
 * IndexManager for storing indexing documents off-line and batch indexing them
+* More Schema API Action Calls
+* Collections API Support
 
-
+Contributing
+------------
+I've realized that that there isn't really a well maintained Solr Python library I liked so I put this together. 
+Contributions (code, tests, documentation) are definitely welcome; if you have a question about development please open up an issue on github page. 
+If you have a pull request, please make sure to add tests and that all of them pass before submitting. 

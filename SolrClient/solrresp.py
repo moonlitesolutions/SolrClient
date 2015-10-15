@@ -2,10 +2,6 @@ import json
 from .exceptions import *
 
 class SolrResponse:
-    '''
-    This gets returned by SolrClient.query() method and helps you parse Solr's raw output. 
-    '''
-    
     def __init__(self,data):
         self.data = data
         self.query_time = data['responseHeader']['QTime']
