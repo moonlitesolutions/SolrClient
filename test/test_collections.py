@@ -7,6 +7,7 @@ from time import sleep
 from SolrClient import SolrClient
 from .test_config import test_config
 from .RandomTestData import RandomTestData
+
 logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 
 class schemaTest(unittest.TestCase):
@@ -37,8 +38,13 @@ class schemaTest(unittest.TestCase):
         sleep(pause)
 
     def delete_fields(self):
+        #Fix this later to check for field before sending a delete
         for copy_field in test_config['collections']['copy_fields']:
-            self.solr.schema.delete_copy_field(test_config['SOLR_COLLECTION'],copy_field)
+            try:
+                self.solr.schema.delete_copy_field(test_config['SOLR_COLLECTION'],copy_field)
+            except:
+                pass
+                
         for field in test_config['collections']['fields']:
             if self.solr.schema.does_field_exist(test_config['SOLR_COLLECTION'],field['name']):
                 self.solr.schema.delete_field(test_config['SOLR_COLLECTION'],field['name'])

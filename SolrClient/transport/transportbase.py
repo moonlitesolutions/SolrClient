@@ -1,5 +1,5 @@
 import logging
-from ..exceptions import SolrError
+from ..exceptions import *
 
 
     
