@@ -15,7 +15,11 @@ Requirements
 
 Features
 ----------
+* Flexible and simple query mechanism
 * Response Object to easily extract data from Solr Response
+
+  * Range Facets
+  * Facet Pivots
 * Cursor Mark support
 * Indexing:
 

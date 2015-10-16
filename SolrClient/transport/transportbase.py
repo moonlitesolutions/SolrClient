@@ -32,7 +32,6 @@ class TransportBase:
             for host in self.HOST_CONNECTIONS:
                 try:
                     return function(self,host,**kwargs)
-                    break
                 except ConnectionError as e:
                     self.logger.exception(e)
                     continue

@@ -73,9 +73,9 @@ class SolrClient:
                     query[field] = query[field].replace(' ','')
                 elif type(query[field]) is list:
                     query[field] = [s.replace(' ','') for s in query[field]]
-                    
-        resp =  self.transport.send_request(method='GET',endpoint=request_handler,collection=collection, params=query,*kwargs)
-        return SolrResponse(resp)
+         
+        return(SolrResponse(self.transport.send_request(method='GET',endpoint=request_handler,collection=collection, params=query,*kwargs)))
+            
         
     def index_json(self,collection,data,params={},**kwargs):
         '''
