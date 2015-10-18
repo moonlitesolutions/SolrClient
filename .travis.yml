@@ -3,7 +3,7 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-install: "pip install requests"
+install: "pip install requests psutil"
 script: 
   - python3 -m unittest test.test_resp
   - python3 -m unittest test.test_client

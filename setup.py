@@ -11,6 +11,6 @@ setup(
     url = "https://github.com/moonlitesolutions/SolrClient",
     description = "Python based client for Solr. ",
     install_requires = [
-        "requests>=2.2.1",
+        "requests>=2.2.1","psutil"
     ],
 )

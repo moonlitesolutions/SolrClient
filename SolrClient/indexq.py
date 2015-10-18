@@ -48,7 +48,7 @@ class IndexQ():
         self._locked = False
         
         #Lock File        
-        self._lck = self._qpathdir + 'index.lock'
+        self._lck = os.path.join(self._qpathdir,'index.lock')
         
         for dir in [self._qpathdir, self._todo_dir, self._done_dir]:
             if not os.path.isdir(dir):
@@ -59,11 +59,7 @@ class IndexQ():
             self._output_filename_pattern = self._queue_name+"_{}.json"
             self._preprocess = self._buffer(self._size*1000000, self._write_file)
             
-        elif self._mode == 'out':
-            if self._lock():
-                self._locked = True
-                self.all_items = self._get_all_as_list()
-
+            
         self.logger.info("Opening Queue {}".format(queue))
     
     #This part is all about loading data
@@ -128,7 +124,8 @@ class IndexQ():
                 [_c['buf'].append(x) for x in item]
                 #Wish I didn't have to make a string of it over here sys.getsizeof wasn't providing accurate info either.
                 _c['size'] += len(str(item))
-                self.logger.debug("Item added to Buffer {} New Buffer Size is {}".format(self._queue_name, _c['size']))
+                if self._devel:
+                    self.logger.debug("Item added to Buffer {} New Buffer Size is {}".format(self._queue_name, _c['size']))
             if _c['size'] / _c['osize'] > self._threshold or (finalize is True and len(_c['buf']) >= 1):
                 #Write out the buffer
                 if self._devel:
@@ -146,65 +143,101 @@ class IndexQ():
             return _c['size']
         return inner
 
-        
     #This is about pullind data out
     def _lock(self):
         '''
         Locks, or returns False if already locked
         '''
-        if os.path.isfile(self._lck):
-            self.logger.error("Index already locked")
-            return False
-        else:
-            with open(self.lck,'w') as fh:
+        if not self._is_locked():
+            with open(self._lck,'w') as fh:
+                if self._devel: self.logger.debug("Locking")
                 fh.write(str(os.getpid()))
             return True
+        else:
+            return False
+    
+    def _is_locked(self):
+        if os.path.isfile(self._lck):
+            try:
+                import psutil
+            except ImportError:
+                self.logger.error("Index already locked")
+                return True #Lock file exists and no psutil
+            #If psutil is imported
+            with open(self._lck) as f:
+                pid = f.read()
+            return True if psutil.pid_exists(int(pid)) else False
+        else:
+            return False
         
     def _unlock(self):
         if self._devel: self.logger.debug("Unlocking Index")
-        if os.path.isfile(self.lck):
-            try:
-                os.remove(self.lck)
-                return True
-            except:
-                self.logger.error("Couldn't unlock - remove {}".format(self.lck))
-                return False
+        if self._is_locked():
+            os.remove(self._lck)
+            return True
         else:
             return True
         
-    def _get_all_as_list(self):
+    def get_all_as_list(self,dir='_todo_dir'):
         '''
-        Returns a list of all items
+        Returns a list of the the full path to all items currently in the todo directory. The items will be listed in ascending order based on filesystem time. 
+        This will re-scan the directory on each execution. 
+        
+        Do not use this to process items, this method should only be used for troubleshooting or something axillary. To process items use get_todo_items() iterator. 
         '''
-        list = [x for x in os.listdir(self._todo_dir) if x.endswith('.json') or x.endswith('.json.gz')]
-        full = [os.path.join(self._todo_dir,x) for x in list]
+        dir = getattr(self,dir)
+        list = [x for x in os.listdir(dir) if x.endswith('.json') or x.endswith('.json.gz')]
+        full = [os.path.join(dir,x) for x in list]
         full.sort(key=lambda x: os.path.getmtime(x))
         return full
+        
+
+       
+    def get_todo_items(self,**kwargs):
+        '''
+        Returns an iterator that will provide each item in the todo queue. Note that to complete each item you have to run complete method with the output of this iterator. 
+        '''
+        def inner(self):
+            yield from self.get_all_as_list()
+            self._unlock()
+            
+        if not self._is_locked():
+            if self._lock():
+                return inner(self)
+        raise RuntimeError("Index Already Locked")
     
-    def complete(self,filename=False,**kwargs):
+    def complete(self,filepath,compress=True):
         '''
-        Marks the item as complete; moves it to the done directory and compresses it. 
+        Marks the item as complete by moving it to the done directory and optionally gzipping it. 
         '''
-        if self.multi and filename:
-            current = filename.replace(self.dirs['todo'],'')
-        elif type(self.current) is str:
-            current = self.current
-        else:
-            logging.error("Couldn't Complete, because current file was not understood")
-            logging.error("CURRENT:".format(self.current))
-            logging.error("FILENAME:".format(filename))
-            return False
-        logging.debug("Completing {} ".format(current))
         
-        logging.debug("Moving {} to {}".format(self.dirs['todo']+current,self.dirs['done']+current))
-        try:
-            shutil.move(self.dirs['todo']+current,self.dirs['done']+'/'+current)
-            self._compress(self.dirs['done']+current)
-        except:
+        if self._mode == 'in':
+            raise RuntimeError("The mode for this IndexQ instance is input, it needs to be output for this to work")
+        elif self._mode == 'out':
+            if not os.path.exists(filepath):
+                raise("Can't Complete {}, it doesn't exist".format(filepath))
+            if self._devel: self.logger.debug("Completing {} ".format(filepath))
             try:
-                shutil.move(self.dirs['todo']+current[:-3],self.dirs['done']+'/'+current)
-                self._compress(self.dirs['done']+current[:-3])
+                shutil.move(
+                    filepath,
+                    os.path.join(self._done_dir,os.path.split(filepath)[-1]))
+                self.logger.info("{} Completed".format(filepath))
             except:
-                logging.error("Couldn't Complete the File")
-        
-        self.current = ''
+                self.logger.error("Couldn't Complete {}".format(filepath))
+                raise
+                
+
+    def index(self, solr, collection, procs=1, method='stream_file', **kwargs):
+        '''
+        Will index the queue into a specified solr instance and collection. Specify multiple procs to make this faster. 
+        Used to automatically index the todo file into Solr. 
+        :param object solr: SolrClient object
+        :param string collection: The name of the collection to index document into. 
+        :param int procs: Number of simultaneous processes to spin up for indexing. 
+        '''
+        method = getattr(solr,method)
+        if procs == 1:
+            for todo_file in self.get_todo_items():
+                solr.method(todo_file)
+                
+            

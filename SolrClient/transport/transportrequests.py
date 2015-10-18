@@ -51,20 +51,18 @@ class TransportRequests(TransportBase):
         
         try:
             res = self.session.request(method, url, params=params, data=data,headers = {'content-type': 'application/json'})
-            if res.status_code == 404:
-                raise ConnectionError("404 - {}".format(res.url))
-            if res.status_code == 401:
-                raise ConnectionError("401 - {}".format(res.url))
-            elif res.status_code == 500:
-                raise SolrError("500 - " + res.url + " "+res.text)
-            elif res.status_code == 400:
-                raise SolrError(res.url+" "+res.text)
-            return res.json()
         except requests.exceptions.ConnectionError as e:
             self.logger.exception(e)
             raise ConnectionError(e)
-        except ConnectionError as e:
-            self.logger.exception(e)
-            raise ConnectionError(e)
             
+        if res.status_code == 404:
+            raise ConnectionError("404 - {}".format(res.url))
+        if res.status_code == 401:
+            raise ConnectionError("401 - {}".format(res.url))
+        elif res.status_code == 500:
+            raise SolrError("500 - " + res.url + " "+res.text)
+        elif res.status_code == 400:
+            raise SolrError(res.url+" "+res.text)
+            
+        return res.json()            
         

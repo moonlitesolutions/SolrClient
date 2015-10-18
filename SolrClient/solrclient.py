@@ -16,7 +16,7 @@ class SolrClient:
     :param transport: Transport class to use. So far only requests is supported. 
     :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level. 
     '''
-    def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests,devel=False,auth=None):
+    def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests, devel=False, auth=None):
   
         self.devel = devel
         self.host = host
@@ -73,8 +73,10 @@ class SolrClient:
                     query[field] = query[field].replace(' ','')
                 elif type(query[field]) is list:
                     query[field] = [s.replace(' ','') for s in query[field]]
-         
-        return(SolrResponse(self.transport.send_request(method='GET',endpoint=request_handler,collection=collection, params=query,*kwargs)))
+        
+        res = self.transport.send_request(method='GET',endpoint=request_handler,collection=collection, params=query,*kwargs)
+        return SolrResponse(res) if res else False
+        
             
         
     def index_json(self,collection,data,params={},**kwargs):
@@ -89,7 +91,11 @@ class SolrClient:
             >>> solr.index_json('SolrClient_unittest',json.dumps(docs))
             
         '''
-        return self.transport.send_request(method='POST',endpoint='update',collection=collection, data=data,params=params,*kwargs)
+        res =  self.transport.send_request(method='POST',endpoint='update',collection=collection, data=data,params=params,*kwargs)
+        if res['responseHeader']['status'] == 0:
+            return True
+        else:
+            return False
         
     def delete_doc_by_id(self,collection,id,**kwargs):
         '''
@@ -148,4 +154,7 @@ class SolrClient:
         data = {'stream.file' : filename,
                 'stream.contentType' : 'text/json'}
         res = self.transport.send_request(method='GET', endpoint='update/json', collection=collection, params=data, *kwargs)
-        return res
+        if res['responseHeader']['status'] == 0:
+            return True
+        else:
+            return False
