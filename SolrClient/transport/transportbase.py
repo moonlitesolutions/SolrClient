@@ -31,11 +31,13 @@ class TransportBase:
         def inner(self,**kwargs):
             for host in self.HOST_CONNECTIONS:
                 try:
-                    return function(self,host,**kwargs)
+                    data =  function(self,host,**kwargs)
                 except ConnectionError as e:
+                    self.logger.error("Tried connecting to Solr, but couldn't because of the following exception.")
                     self.logger.exception(e)
                     continue
-                raise
+                else:
+                    return data
         return inner
         
     @_retry

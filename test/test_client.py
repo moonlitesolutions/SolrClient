@@ -40,6 +40,11 @@ class ClientTestIndexing(unittest.TestCase):
     def commit(self):
         self.solr.commit(test_config['SOLR_COLLECTION'],openSearcher=True)
         sleep(5)
+        
+    def test_access_without_auth(self):
+        solr = SolrClient(test_config['SOLR_SERVER'][0],devel=True)
+        with self.assertRaises(ConnectionError) as cm:
+            solr.query('SolrClient_unittest',{'q':'not_gonna_happen'})
 
     def test_indexing_json(self):
         self.docs = self.rand_docs.get_docs(53)
