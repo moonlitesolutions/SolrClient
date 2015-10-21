@@ -6,26 +6,27 @@ import gzip
 import shutil
 import random
 import json
+from multiprocessing.pool import ThreadPool
+from functools import partial
+from SolrClient.exceptions import *
+
 
 class IndexQ():
     '''
-    IndexQ sub module will help with indexing large amounts of content into Solr. It can be used to de-couple data processing with indexing. 
-    
-    For example, if you are working through a bunch of data that generates many small records that need to be updated you will need to either send them to Solr one at a time, or buffer them somewhere and possible combine multiple items into a larger update for solr. This is what this submodule is supposed to do for you. It uses an internal queue to buffer items and write them to the file system at certain increments. Then the indexer component can pick up these items and index them to Solr as a separate process. 
+    IndexQ sub module will help with indexing content into Solr. It can be used to de-couple data processing from indexing. 
     
     Each queue is set up with the following directory structure
     queue_name/ 
      - todo/
      - done/ 
     
-    Items get saved to the todo directory and once an item is processed it gets moved to the done directory. Items are also processed in chronological order. 
+    Items get saved to the todo directory and once an item is processed it gets moved to the done directory. Items are processed in chronological order. 
     '''
 
-    def __init__(self, basepath, queue, compress=False, size=0, devel=False, threshold = 0.90,  mode='in', **kwargs ):
+    def __init__(self, basepath, queue, compress=False, size=0, devel=False, threshold = 0.90, **kwargs ):
         '''
         :param string basepath: Path to the root of the indexQ. All other queues will get created underneath this. 
         :param string queue: Name of the queue. 
-        :param string mode: If you are queuing (in) or de-queuing (out)
         :param bool compress: If todo files should be compressed, set to True if there is going to be a lot of data and these files will be sitting there for a while.
         :param int size: Internal buffer size (MB) that queued data must be to get written to the file system. If not passed, the data will be written to the filesystem as it is sent to IndexQ, otherwise they will be written when the buffer reaches 90%. 
         
@@ -44,7 +45,6 @@ class IndexQ():
         self._qpathdir = os.path.join(self._basepath,self._queue_name)
         self._todo_dir = os.path.join(self._basepath,self._queue_name,'todo')
         self._done_dir = os.path.join(self._basepath,self._queue_name,'done')
-        self._mode = mode
         self._locked = False
         
         #Lock File        
@@ -54,11 +54,10 @@ class IndexQ():
             if not os.path.isdir(dir):
                 os.makedirs(dir)
         
-        if self._mode == 'in':
-            #First argument will be datestamp, second is counter
-            self._output_filename_pattern = self._queue_name+"_{}.json"
-            self._preprocess = self._buffer(self._size*1000000, self._write_file)
-            
+        #First argument will be datestamp, second is counter
+        self._output_filename_pattern = self._queue_name+"_{}.json"
+        self._preprocess = self._buffer(self._size*1000000, self._write_file)
+        
             
         self.logger.info("Opening Queue {}".format(queue))
     
@@ -79,15 +78,12 @@ class IndexQ():
         '''
         if item:
             if type(item) is list:
-                if self._devel: self.logger.debug("Adding List")
                 check = list(set([type(d) for d in item]))
                 if len(check) > 1 or dict not in check:
                     raise ValueError("More than one data type detected in item (list). Make sure they are all dicts of data going to Solr")
             elif type(item) is dict:
-                if self._devel: self.logger.debug("Adding Dict")
                 item = [item]
             elif type(item) is str:
-                if self._devel: self.logger.debug("Adding String")
                 return self._write_file(item)
             else:
                 raise ValueError("Not the right data submitted. Make sure you are sending a dict or list of dicts")
@@ -157,11 +153,13 @@ class IndexQ():
             return False
     
     def _is_locked(self):
+        '''
+        Checks to see if we are already pulling items from the queue
+        '''
         if os.path.isfile(self._lck):
             try:
                 import psutil
             except ImportError:
-                self.logger.error("Index already locked")
                 return True #Lock file exists and no psutil
             #If psutil is imported
             with open(self._lck) as f:
@@ -171,6 +169,9 @@ class IndexQ():
             return False
         
     def _unlock(self):
+        '''
+        Unlocks the index
+        '''
         if self._devel: self.logger.debug("Unlocking Index")
         if self._is_locked():
             os.remove(self._lck)
@@ -196,48 +197,78 @@ class IndexQ():
     def get_todo_items(self,**kwargs):
         '''
         Returns an iterator that will provide each item in the todo queue. Note that to complete each item you have to run complete method with the output of this iterator. 
+        
+        That will move the item to the done directory and prevent it from being retrieved in the future. 
         '''
         def inner(self):
-            yield from self.get_all_as_list()
+            for item in self.get_all_as_list():
+                yield item
             self._unlock()
             
         if not self._is_locked():
             if self._lock():
                 return inner(self)
-        raise RuntimeError("Index Already Locked")
+        raise RuntimeError("RuntimeError: Index Already Locked")
     
-    def complete(self,filepath,compress=True):
+    def complete(self,filepath):
         '''
         Marks the item as complete by moving it to the done directory and optionally gzipping it. 
         '''
         
-        if self._mode == 'in':
-            raise RuntimeError("The mode for this IndexQ instance is input, it needs to be output for this to work")
-        elif self._mode == 'out':
-            if not os.path.exists(filepath):
-                raise("Can't Complete {}, it doesn't exist".format(filepath))
-            if self._devel: self.logger.debug("Completing {} ".format(filepath))
-            try:
-                shutil.move(
-                    filepath,
-                    os.path.join(self._done_dir,os.path.split(filepath)[-1]))
-                self.logger.info("{} Completed".format(filepath))
-            except:
-                self.logger.error("Couldn't Complete {}".format(filepath))
-                raise
+        #TODO: Implement compress option to also gzip these completed items
+        if not os.path.exists(filepath):
+            raise("Can't Complete {}, it doesn't exist".format(filepath))
+        if self._devel: self.logger.debug("Completing - {} ".format(filepath))
+        newpath = os.path.join(self._done_dir,os.path.split(filepath)[-1])
+        try:
+            shutil.move(filepath, newpath)
+            self.logger.info(" Completed - {}".format(filepath))
+        except:
+            self.logger.error("Couldn't Complete {}".format(filepath))
+            raise
                 
 
-    def index(self, solr, collection, procs=1, method='stream_file', **kwargs):
+    def index(self, solr, collection, threads=1, send_method='stream_file', **kwargs):
         '''
-        Will index the queue into a specified solr instance and collection. Specify multiple procs to make this faster. 
-        Used to automatically index the todo file into Solr. 
+        Will index the queue into a specified solr instance and collection. Specify multiple threads to make this faster, however keep in mind that if you specify multiple threads the items may not be in order.  
+        Example::
+            solr = SolrClient('http://localhost:8983/solr/')
+            for doc in self.docs:
+                index.add(doc, finalize=True)
+            index.index(solr,'SolrClient_unittest')
+            
         :param object solr: SolrClient object
         :param string collection: The name of the collection to index document into. 
-        :param int procs: Number of simultaneous processes to spin up for indexing. 
+        :param int threads: Number of simultaneous threads to spin up for indexing. 
+        :param string send_method: SolrClient method to execute for indexing. Default is stream_file
         '''
-        method = getattr(solr,method)
-        if procs == 1:
-            for todo_file in self.get_todo_items():
-                solr.method(todo_file)
+        try:
+            method = getattr(solr, send_method)
+        except AttributeError:
+            raise AttributeError("Couldn't find the send_method. Specify either stream_file or local_index")
+        
+        self.logger.info("Indexing {} into {} using {}".format(self._queue_name, collection, send_method))
+        def _wrap(method, collection, index, doc):
+            try:
+                res = method(collection,doc)
+                if res:
+                    index.complete(doc)
+                return res
+            except SolrError:
+                self.logger.error("Error Indexing Item: {}".format(doc))
+                pass
                 
-            
+        if threads > 1:
+            method = partial(_wrap, method, collection, self)
+            with ThreadPool(threads) as p:
+                p.map(method, self.get_todo_items())
+        else:
+            for todo_file in self.get_todo_items():
+                try:
+                    result = method(collection, todo_file)
+                    if result:
+                        self.complete(todo_file)
+                except SolrError:
+                    self.logger.error("Error Indexing Item: {}".format(todo_file))
+                    self._unlock()
+                    raise

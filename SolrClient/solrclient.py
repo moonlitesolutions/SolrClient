@@ -2,6 +2,7 @@ import gzip
 import os
 import json
 import logging
+import time
 from .transport import TransportRequests
 from .schema import Schema
 from .exceptions import *
@@ -91,7 +92,9 @@ class SolrClient:
             >>> solr.index_json('SolrClient_unittest',json.dumps(docs))
             
         '''
+        
         res =  self.transport.send_request(method='POST',endpoint='update',collection=collection, data=data,params=params,*kwargs)
+        
         if res['responseHeader']['status'] == 0:
             return True
         else:

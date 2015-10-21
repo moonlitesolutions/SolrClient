@@ -1,6 +1,9 @@
 import logging
+import time
 from .transportbase import TransportBase
 from ..exceptions import SolrError
+
+
 try:
     import requests
     req = True
@@ -39,7 +42,7 @@ class TransportRequests(TransportBase):
             host += '/'
             
         data = kwargs['data'] if 'data' in kwargs else {}
-        if kwargs['endpoint']:
+        if 'endpoint' in kwargs:
             if 'collection' in kwargs:
                 url = "{}{}/{}".format(host,kwargs['collection'],kwargs['endpoint'])
             else:
@@ -49,20 +52,33 @@ class TransportRequests(TransportBase):
         
         self.logger.debug("Sending Request to {} with {}".format(url,", ".join([str("{}={}".format(key, params[key])) for key in params])))
         
+        #Some code used from ES python client. 
+        start = time.time()
         try:
             res = self.session.request(method, url, params=params, data=data,headers = {'content-type': 'application/json'})
-        except requests.exceptions.ConnectionError as e:
-            self.logger.exception(e)
-            raise ConnectionError(e)
-            
-        if res.status_code == 404:
-            raise ConnectionError("404 - {}".format(res.url))
-        if res.status_code == 401:
-            raise ConnectionError("401 - {}".format(res.url))
-        elif res.status_code == 500:
-            raise SolrError("500 - " + res.url + " "+res.text)
-        elif res.status_code == 400:
-            raise SolrError(res.url+" "+res.text)
-            
-        return res.json()            
+            duration = time.time() - start
+            self.logger.debug("Request Completed in {} Seconds".format(round(duration,2)))
+        except requests.exceptions.SSLError as e:
+            self._log_connection_error(method, url, body, time.time() - start, exception=e)
+            raise ConnectionError('N/A', str(e), e)
+        except requests.Timeout as e:
+            self._log_connection_error(method, url, body, time.time() - start, exception=e)
+            raise ConnectionError('TIMEOUT', str(e), e)
+        except requests.ConnectionError as e:
+            self._log_connection_error(method, url, body, time.time() - start, exception=e)
+            raise ConnectionError('N/A', str(e), e)
+        
+        if (200 <= res.status_code < 300):
+            return res.json()
+        else:
+            if res.status_code == 404:
+                raise ConnectionError("404 - {}".format(res.url))
+            elif res.status_code == 401:
+                raise ConnectionError("401 - {}".format(res.url))
+            elif res.status_code == 500:
+                raise SolrError("500 - " + res.url + " "+res.text)
+            elif res.status_code == 400:
+                raise SolrError(res.url+" "+res.text)
+                
+        
         

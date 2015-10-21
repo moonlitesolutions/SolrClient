@@ -7,6 +7,7 @@ from time import sleep
 from SolrClient import SolrClient
 from .test_config import test_config
 from .RandomTestData import RandomTestData
+
 logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 
 class ClientTestIndexing(unittest.TestCase):
@@ -42,10 +43,13 @@ class ClientTestIndexing(unittest.TestCase):
         sleep(5)
         
     def test_access_without_auth(self):
-        solr = SolrClient(test_config['SOLR_SERVER'][0],devel=True)
+        if not test_config['SOLR_CREDENTIALS'][0]:
+            return
+        solr = SolrClient(test_config['SOLR_SERVER'],devel=True)
         with self.assertRaises(ConnectionError) as cm:
             solr.query('SolrClient_unittest',{'q':'not_gonna_happen'})
-
+            
+    
     def test_indexing_json(self):
         self.docs = self.rand_docs.get_docs(53)
         self.solr.index_json(test_config['SOLR_COLLECTION'],json.dumps(self.docs))
@@ -57,7 +61,7 @@ class ClientTestIndexing(unittest.TestCase):
         self.delete_docs()
         self.commit()
         
-
+    
     def test_index_json_file(self):
         self.docs = self.rand_docs.get_docs(55)
         with open('temp_file.json','w') as f:
@@ -73,6 +77,7 @@ class ClientTestIndexing(unittest.TestCase):
             os.remove('temp_file.json')
         except:
             pass
+            
     
     def test_stream_file_gzip_file(self):
         self.docs = self.rand_docs.get_docs(60)

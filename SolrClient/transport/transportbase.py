@@ -9,8 +9,8 @@ class TransportBase:
     """
     def __init__(self,solr,host=None,auth=[None,None]):
         
-        self.solr = solr
-        self.devel = True if self.solr.devel else False
+        #self.solr = solr
+        #self.devel = True if self.solr.devel else False
         self.logger=logging.getLogger(str(__package__))
         self.HOST_CONNECTIONS = self._proc_host(host)
         self.auth = auth
@@ -52,4 +52,10 @@ class TransportBase:
         elif 'error' in res_dict:
             raise SolrError(str(res_dict['error']))
         return res_dict
+    
+    
+    def _log_connection_error(self, method, full_url, body, duration, status_code=None, exception=None):
+        self.logger.warning("Connection Error: [{}] {} - {} - {}".format(status_code, method, url, body))
         
+        
+    
