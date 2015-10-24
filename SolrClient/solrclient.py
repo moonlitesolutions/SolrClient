@@ -17,6 +17,7 @@ class SolrClient:
     :param transport: Transport class to use. So far only requests is supported. 
     :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level. 
     '''
+    __version__ = '0.0.4'
     def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests, devel=False, auth=None):
   
         self.devel = devel
