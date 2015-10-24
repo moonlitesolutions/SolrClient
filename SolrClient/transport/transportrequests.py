@@ -1,17 +1,12 @@
 import logging
 import time
 from .transportbase import TransportBase
-from ..exceptions import SolrError
-
-
+from ..exceptions import *
 try:
     import requests
     req = True
 except ImportError:
     req = False
-    
-
-
 
 class TransportRequests(TransportBase):
     """
@@ -25,8 +20,6 @@ class TransportRequests(TransportBase):
         if self.auth:
             self.session.auth = (self.auth[0],self.auth[1])
         
-    
-    
     
     def _send(self,host,method='GET',**kwargs):
         url = None

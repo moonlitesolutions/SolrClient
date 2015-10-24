@@ -5,6 +5,7 @@ import json
 import os
 from time import sleep
 from SolrClient import SolrClient
+from SolrClient.exceptions import *
 from .test_config import test_config
 from .RandomTestData import RandomTestData
 
