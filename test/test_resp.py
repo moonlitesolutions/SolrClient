@@ -6,7 +6,7 @@ from time import sleep
 from SolrClient import SolrClient
 from .test_config import test_config
 from .RandomTestData import RandomTestData
-logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+#logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
      
 class ClientTestQuery(unittest.TestCase):
     
@@ -87,7 +87,7 @@ class ClientTestQuery(unittest.TestCase):
         div = lambda x: str(x//10 * 10)
         out = {}
         for k,g in itertools.groupby(sorted(prices),div):
-            out[k] = len(list(g))
+            out[k] = len(list(g)) or 0
         self.assertDictEqual(out,res.get_facets_ranges()['price'])
     
     def test_facet_pivot(self):

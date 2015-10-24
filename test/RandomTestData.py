@@ -4,7 +4,13 @@ import datetime
 import random
 import operator
 import uuid
-from .test_config import test_config
+try:
+    from .test_config import test_config
+except SystemError:
+    from test_config import test_config
+except ImportError:
+    from test_config import test_config
+    
 from time import sleep
 
 class RandomTestData:

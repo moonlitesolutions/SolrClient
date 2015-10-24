@@ -8,3 +8,8 @@ class SolrResponseError(Exception):
     '''
     Errors relatd to parsing Solr Response
     '''
+    
+class ConnectionError(Exception):
+    '''
+    Errors connecting to Solr
+    '''

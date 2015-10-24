@@ -52,8 +52,8 @@ Components
 
    Solr Client <SolrClient>
    Solr Response <SolrResponse>
+   Index Queue <IndexQ>
    Schema <Schema>
-
 
 Roadmap
 -------

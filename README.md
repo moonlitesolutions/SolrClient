@@ -2,13 +2,13 @@
 [![Documentation Status](https://readthedocs.org/projects/solrclient/badge/?version=latest)](http://solrclient.readthedocs.org/en/latest/?badge=latest)
 
 # SolrClient
-SolrClient 0.0.3
+SolrClient 0.0.4
 ----------
 SolrClient is going to be the ultimate python library for Solr; built in python3 with support for latest features of Solr 5. Development is heavily focused on indexing as well as parsing various query responses and returning them in native python data structures. Several helper classes will be built to automate querying and management of Solr clusters. 
 
 Requirements
 ----------
-* python 3
+* python 3.3+
 * requests library (http://docs.python-requests.org/en/latest/)
 * Solr
 
@@ -29,7 +29,7 @@ Features
   * Index local files
 * Specify multiple hosts/IPs for SolrCloud for redundancy
 * Basic Managed Schema field management
-
+* IndexManager for storing indexing documents off-line and batch indexing them
 
 Getting Started
 ----------
@@ -67,7 +67,6 @@ Roadmap
 * urllib support
 * Collection Alias Management
 * Collection Re-indexing with cursor mark
-* IndexManager for storing indexing documents off-line and batch indexing them
 * More Schema API Action Calls
 * Collections API Support
 

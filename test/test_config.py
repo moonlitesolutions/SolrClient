@@ -1,5 +1,5 @@
 import os
-print(os.environ.get('SOLR_TEST_URL'))
+
 test_config = {
     'SOLR_SERVER': [os.environ.get('SOLR_TEST_URL')],
     'SOLR_COLLECTION': 'SolrClient_unittest',
