@@ -19,7 +19,7 @@ class TestIndexQ(unittest.TestCase):
     def setUpClass(self):
         self.rand_docs = RandomTestData()
         self.docs = self.rand_docs.get_docs(50)
-        self.devel = True
+        self.devel = False
         if self.devel:
             logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 
