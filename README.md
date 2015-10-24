@@ -8,7 +8,7 @@ SolrClient is going to be the ultimate python library for Solr; built in python3
 
 Requirements
 ----------
-* python 3
+* python 3.3+
 * requests library (http://docs.python-requests.org/en/latest/)
 * Solr
 
