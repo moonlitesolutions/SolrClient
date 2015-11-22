@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
     name = "SolrClient",
-    version = "0.0.5",
+    version = "0.0.6",
     author = "Nick Vasilyev",
     author_email = "nick.vasilyev1@gmail.com",
     packages = find_packages(),
