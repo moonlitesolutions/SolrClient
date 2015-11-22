@@ -11,7 +11,7 @@ from .test_config import test_config
 from .RandomTestData import RandomTestData
 
 test_config['indexqbase']=os.getcwd()
-logging.basicConfig(level=logging.INFO,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+#logging.basicConfig(level=logging.INFO,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
      
 class ReindexerTests(unittest.TestCase):
     
