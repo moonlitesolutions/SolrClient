@@ -23,11 +23,12 @@ class Schema():
         '''
         Returns Schema Fields from a Solr Collection 
         '''
-        return self.solr.transport.send_request(endpoint='schema/fields',collection=collection)
-        
+        res, con_info = self.solr.transport.send_request(endpoint='schema/fields',collection=collection)
+        return res
     
     def get_schema_copyfields(self, collection):
-        return self.solr.transport.send_request(endpoint='schema/copyfields',collection=collection)
+        res, con_info = self.solr.transport.send_request(endpoint='schema/copyfields',collection=collection)
+        return res
     
 
     def create_field(self, collection, field_dict):
@@ -46,7 +47,8 @@ class Schema():
         if self.does_field_exist(collection,field_dict['name']):
             raise ValueError("Field {} Already Exists in Solr Collection {}".format(field_dict['name'],collection))
         temp = {"add-field":dict(field_dict)}
-        return self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
+        res, con_info =self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
+        return res
 
         
     def delete_field(self,collection,field_name):
@@ -60,7 +62,8 @@ class Schema():
             raise ValueError("Field {} Doesn't Exists in Solr Collection {}".format(field_name,collection))
         else:
             temp = {"delete-field" : { "name":field_name }}
-            return self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
+            res, con_info = self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
+            return res
 
             
     def does_field_exist(self,collection,field_name):
@@ -71,6 +74,7 @@ class Schema():
         :param string field_name: String name of the field. 
         '''
         schema = self.get_schema_fields(collection)
+        logging.info(schema)
         return True if field_name in [field['name'] for field in schema['fields']] else False
     
     def create_copy_field(self,collection,copy_dict):
@@ -87,8 +91,8 @@ class Schema():
         Reference: https://cwiki.apache.org/confluence/display/solr/Schema+API#SchemaAPI-AddaNewCopyFieldRule
         '''
         temp = {"add-copy-field":dict(copy_dict)}
-        return self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
-        
+        res, con_info = self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
+        return res
  
     def delete_copy_field(self,collection,copy_dict):
         '''
@@ -106,8 +110,10 @@ class Schema():
         if self.devel:
             self.logger.debug("Deleting {}".format(str(copy_dict)))
         temp = {"delete-copy-field":dict(copy_dict)}
-        return self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
-    
+        res, con_info = self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
+        return res
+
     def get_schema_copyfields(self,collection):
-        return self.solr.transport.send_request(endpoint='schema/copyfields',collection=collection)['copyFields']
+        res, con_info = self.solr.transport.send_request(endpoint='schema/copyfields',collection=collection)
+        return res['copyFields']
         

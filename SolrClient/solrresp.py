@@ -5,6 +5,7 @@ class SolrResponse:
     def __init__(self,data):
         self.data = data
         self.query_time = data['responseHeader']['QTime']
+        self.header = data['responseHeader']
         
         if 'response' in data:
             self.grouped = False

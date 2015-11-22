@@ -272,3 +272,19 @@ class IndexQ():
                     self.logger.error("Error Indexing Item: {}".format(todo_file))
                     self._unlock()
                     raise
+
+    def get_all_json_from_indexq(self):
+        '''
+        Gets all data from the todo files in indexq and returns one huge dictionary of all data. 
+        '''
+        files = self.get_all_as_list()
+        out = []
+        for efile in files:
+            if efile.endswith('.gz'):
+                f = gzip.open(efile,'rt',encoding='utf-8')
+            else:
+                f = open(efile)
+            f_data = json.load(f)
+            f.close()
+            out.extend(f_data)
+        return out

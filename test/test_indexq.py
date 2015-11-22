@@ -193,7 +193,8 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs,finalize=True)
             docs.append(doc)
-        index = IndexQ(test_config['indexqbase'], 'testq', mode='out')
+            sleep(1)
+        index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs,indexdocs)
         [os.remove(doc) for doc in docs]
@@ -207,6 +208,7 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs,finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq', mode='out')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs,indexdocs)
@@ -221,9 +223,11 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs,finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq', mode='out')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs,indexdocs)
+
         [os.remove(doc) for doc in docs]
     
     def test_dequeue(self):
@@ -270,13 +274,15 @@ class TestIndexQ(unittest.TestCase):
         docs = []
         for _ in range(files):
             doc = index.add(self.docs,finalize=True)
+            sleep(1)
             docs.append(doc)
-        index = IndexQ(test_config['indexqbase'], 'testq', mode='out',compress=False)
+        index = IndexQ(test_config['indexqbase'], 'testq', compress=False)
         indexdocs = []
         for x in index.get_todo_items():
             indexdocs.append(x)
             index.complete(x)
         self.assertEqual(docs,indexdocs)
+
         finaldocnames = [os.path.split(x)[-1] for x in indexdocs]
         donefilepaths = [os.path.join(index._done_dir,x) for x in finaldocnames]
         for x in donefilepaths:
@@ -342,6 +348,7 @@ class TestIndexQ(unittest.TestCase):
         with self.assertRaises(AttributeError):
             index.index(solr,test_config['SOLR_COLLECTION'],send_method='Doesnt exist')
     
+
     def test_index_bad_data(self):
         index = IndexQ(test_config['indexqbase'], 'testq')
         solr = SolrClient(test_config['SOLR_SERVER'], devel=True, auth=test_config['SOLR_CREDENTIALS'])
