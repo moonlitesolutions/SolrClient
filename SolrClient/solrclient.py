@@ -17,7 +17,6 @@ class SolrClient:
     :param transport: Transport class to use. So far only requests is supported. 
     :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level. 
     '''
-    __version__ = '0.0.4'
     def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests, devel=False, auth=None):
   
         self.devel = devel
@@ -25,7 +24,7 @@ class SolrClient:
         
         self.logger = logging.getLogger(__package__)
         self.schema = Schema(self)
-        self.transport = transport(self,host=host,auth=auth)
+        self.transport = transport(self, host=host, auth=auth, devel=devel)
         
     def commit(self,collection,openSearcher=False,softCommit=False,waitSearcher=True,commit=True,**kwargs):
         '''
@@ -47,7 +46,7 @@ class SolrClient:
             
         self.logger.debug("Sending Commit to Collection {}".format(collection))
         try:
-            resp = self.transport.send_request(method='GET',endpoint='update',collection=collection, params=comm,**kwargs)
+            resp, con_inf = self.transport.send_request(method='GET',endpoint='update',collection=collection, params=comm,**kwargs)
         except Exception as e:
             raise
         self.logger.debug("Commit Successful, QTime is {}".format(resp['responseHeader']['QTime']))
@@ -76,8 +75,12 @@ class SolrClient:
                 elif type(query[field]) is list:
                     query[field] = [s.replace(' ','') for s in query[field]]
         
-        res = self.transport.send_request(method='GET',endpoint=request_handler,collection=collection, params=query,*kwargs)
-        return SolrResponse(res) if res else False
+        resp, con_inf = self.transport.send_request(method='GET',endpoint=request_handler,collection=collection, params=query,*kwargs)
+        if resp:
+            resp = SolrResponse(resp)
+            resp.url = con_inf['url']
+            return resp
+
         
             
         
@@ -94,9 +97,9 @@ class SolrClient:
             
         '''
         
-        res =  self.transport.send_request(method='POST',endpoint='update',collection=collection, data=data,params=params,*kwargs)
+        resp, con_inf = self.transport.send_request(method='POST',endpoint='update',collection=collection, data=data,params=params,*kwargs)
         
-        if res['responseHeader']['status'] == 0:
+        if resp['responseHeader']['status'] == 0:
             return True
         else:
             return False
@@ -112,8 +115,9 @@ class SolrClient:
         
         '''
         temp = {"delete": {"query":"id:{}".format(id)}}
-        return self.transport.send_request(method='POST', endpoint='update', collection=collection, data=json.dumps(temp), *kwargs)
-        
+        resp, con_inf = self.transport.send_request(method='POST', endpoint='update', collection=collection, data=json.dumps(temp), *kwargs)
+        return resp
+
     def stream_file(self,collection,filename,**kwargs):
         '''
         
@@ -127,7 +131,6 @@ class SolrClient:
                                        '/local/to/script/temp_file.json')
         
         '''
-        import os
         if os.path.isfile(filename):
             self.logger.info("Indexing {} into Solr Collection {}".format(filename,collection))
             if filename.endswith('gz'):
@@ -157,8 +160,8 @@ class SolrClient:
             
         data = {'stream.file' : filename,
                 'stream.contentType' : 'text/json'}
-        res = self.transport.send_request(method='GET', endpoint='update/json', collection=collection, params=data, *kwargs)
-        if res['responseHeader']['status'] == 0:
+        resp, con_inf = self.transport.send_request(method='GET', endpoint='update/json', collection=collection, params=data, *kwargs)
+        if resp['responseHeader']['status'] == 0:
             return True
         else:
             return False

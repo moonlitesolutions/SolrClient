@@ -62,7 +62,7 @@ class TransportRequests(TransportBase):
             raise ConnectionError('N/A', str(e), e)
         
         if (200 <= res.status_code < 300):
-            return res.json()
+            return [res.json(), {'url': res.url}]
         else:
             if res.status_code == 404:
                 raise ConnectionError("404 - {}".format(res.url))
@@ -70,7 +70,7 @@ class TransportRequests(TransportBase):
                 raise ConnectionError("401 - {}".format(res.url))
             elif res.status_code == 500:
                 raise SolrError("500 - " + res.url + " "+res.text)
-            elif res.status_code == 400:
+            else:
                 raise SolrError(res.url+" "+res.text)
                 
         

@@ -1,7 +1,11 @@
 from setuptools import setup, find_packages
+import ez_setup
+ez_setup.use_setuptools()
+import SolrClient
+version = SolrClient.__version__
 setup(
     name = "SolrClient",
-    version = "0.0.6",
+    version = version,
     author = "Nick Vasilyev",
     author_email = "nick.vasilyev1@gmail.com",
     packages = find_packages(),
@@ -9,6 +13,6 @@ setup(
     url = "https://github.com/moonlitesolutions/SolrClient",
     description = "Python based client for Solr. ",
     install_requires = [
-        "requests>=2.2.1","ez_setup",
+        "requests>=2.2.1","psutil"
     ],
 )

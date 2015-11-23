@@ -22,7 +22,6 @@ Features
 * Specify multiple hosts/IPs for SolrCloud for redundancy
 * Basic Managed Schema field management
 * Collection Reindexing/FS Export with cursorMark (Solr 4.9+)
-* Tested against a real Solr instance
 
 
 Getting Started

@@ -3,7 +3,9 @@ import os
 test_config = {
     'SOLR_SERVER': [os.environ.get('SOLR_TEST_URL')],
     'SOLR_COLLECTION': 'SolrClient_unittest',
-    'SOLR_CREDENTIALS': (os.environ.get('SOLR_TEST_USER'),os.environ.get('SOLR_TEST_PASS')),
+    'SOLR_REINDEXER_COLLECTION_S': 'source_coll',
+    'SOLR_REINDEXER_COLLECTION_D': 'dest_coll',
+    'SOLR_CREDENTIALS': (os.environ.get('SOLR_TEST_USER'), os.environ.get('SOLR_TEST_PASS')),
     'collections':{
         'fields':[
             {'name':'product_name','stored':True,'indexed':True,'type':'text_en'},

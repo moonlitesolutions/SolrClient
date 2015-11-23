@@ -42,7 +42,8 @@ class ClientTestIndexing(unittest.TestCase):
     def commit(self):
         self.solr.commit(test_config['SOLR_COLLECTION'],openSearcher=True)
         sleep(5)
-        
+    
+    @unittest.skip("Skipping for now")
     def test_access_without_auth(self):
         if not test_config['SOLR_CREDENTIALS'][0]:
             return
@@ -61,7 +62,18 @@ class ClientTestIndexing(unittest.TestCase):
             self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'],{'q':'id:{}'.format(doc['id'])}).get_num_found(),1)
         self.delete_docs()
         self.commit()
-        
+    
+    def test_indexing_conn_log(self):
+        self.docs = self.rand_docs.get_docs(53)
+        self.solr.index_json(test_config['SOLR_COLLECTION'],json.dumps(self.docs))
+        self.commit()
+        sleep(5)
+        for doc in self.docs:
+            logging.debug("Checking {}".format(doc['id']))
+            self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'],{'q':'id:{}'.format(doc['id'])}).get_num_found(),1)
+        logging.info(self.solr.transport._action_log)
+        self.delete_docs()
+        self.commit()
     
     def test_index_json_file(self):
         self.docs = self.rand_docs.get_docs(55)
