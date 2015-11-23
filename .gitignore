@@ -14,6 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+.testq/
 lib/
 lib64/
 parts/
