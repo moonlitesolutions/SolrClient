@@ -246,22 +246,22 @@ class ReindexerTests(unittest.TestCase):
         self.assertEqual(
             reindexer._get_date_range_query('2015-11-10', '2015-12-11'),
             {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'index_date', 
-            'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.gap': '+1DAY'}
+            'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.include': 'all', 'facet.range.gap': '+1DAY'}
             )
         self.assertEqual(
             reindexer._get_date_range_query('2015-11-10', '2015-12-11', date_field = 'date123'),
             {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'date123', 
-            'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.gap': '+1DAY'}
+            'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.include': 'all', 'facet.range.gap': '+1DAY'}
             )
         self.assertEqual(
             reindexer._get_date_range_query('2015-11-10', '2015-12-11', date_field = 'date123', timespan='MONTH'),
             {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'date123', 
-            'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.gap': '+1MONTH'}
+            'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.include': 'all', 'facet.range.gap': '+1MONTH'}
             )
         self.assertEqual(
             reindexer._get_date_range_query('2015-11-10', '2015-12-11', timespan='MONTH'),
             {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'index_date', 
-            'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.gap': '+1MONTH'}
+            'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.include': 'all', 'facet.range.gap': '+1MONTH'}
             )
 
     def test_get_date_facet_counts(self):
@@ -341,4 +341,71 @@ class ReindexerTests(unittest.TestCase):
             len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),
             len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs))
 
-        
+    def test_solr_to_solr_reindex_and_resume(self):
+        '''
+        Only reindexes half of the collection on the first time. Then goes back and does a resume to make sure it works. 
+        '''
+        self._index_docs(50000,self.colls[0])
+        solr = SolrClient(test_config['SOLR_SERVER'][0], auth=test_config['SOLR_CREDENTIALS'])
+        reindexer = Reindexer(source=solr, source_coll='source_coll', dest=solr, dest_coll='dest_coll', date_field='date')
+        #Make sure only source has datae
+        self.assertEqual(len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),50000)
+        self.assertEqual(len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs),0)
+        #This gets somehwat of a mid point date in the range. 
+        midpoint = (datetime.datetime.now() - datetime.timedelta(days=
+                    ((self._end_date - self._start_date).days/2)
+                    ))
+        #Reindex approximately half of the data by restricting FQ
+        reindexer.reindex(fq=['date:[* TO {}]'.format(midpoint.isoformat()+'Z')])
+        sleep(10)
+        #Make sure we have at least 20% of the data. 
+        dest_count = len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs)
+        s_count = len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs)
+        self.assertTrue( s_count > dest_count > s_count *.20       )
+        reindexer.resume()
+        sleep(10)
+        #Make sure countc match up after reindex
+        self.assertEqual(
+            len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),
+            len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs))
+
+    def test_solr_to_solr_reindex_and_resume_reverse(self):
+        '''
+        Only reindexes half of the collection on the first time. Then goes back and does a resume to make sure it works. 
+        '''
+        self._index_docs(50000,self.colls[0])
+        solr = SolrClient(test_config['SOLR_SERVER'][0], auth=test_config['SOLR_CREDENTIALS'])
+        reindexer = Reindexer(source=solr, source_coll='source_coll', dest=solr, dest_coll='dest_coll', date_field='date')
+        #Make sure only source has data
+        self.assertEqual(len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),50000)
+        self.assertEqual(len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs),0)
+        #This gets somehwat of a mid point date in the range. 
+        midpoint = (datetime.datetime.now() - datetime.timedelta(days=
+                    ((self._end_date - self._start_date).days/2)
+                    ))
+        #Reindex approximately half of the data by restricting FQ
+        reindexer.reindex(fq=['date:[{} TO *]'.format(midpoint.isoformat()+'Z')])
+        sleep(10)
+        #Make sure we have at least 20% of the data. 
+        dest_count = len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs)
+        s_count = len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs)
+        self.assertTrue( s_count > dest_count > s_count *.20       )
+        reindexer.resume()
+        sleep(10)
+        #Make sure countc match up after reindex
+        self.assertEqual(
+            len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),
+            len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs))
+
+    def test_solr_to_solr_reindexer_per_shard(self):
+        self._index_docs(50000,self.colls[0])
+        solr = SolrClient(test_config['SOLR_SERVER'][0], auth=test_config['SOLR_CREDENTIALS'])
+        reindexer = Reindexer(source=solr, source_coll='source_coll', dest=solr, dest_coll='dest_coll', per_shard=True, date_field='date')
+        #Make sure only source has data
+        self.assertEqual(len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),50000)
+        self.assertEqual(len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs),0)
+        reindexer.reindex()
+        #sloppy check over here, will improve later
+        self.assertEqual(
+            len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),
+            len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs))
