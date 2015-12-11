@@ -124,9 +124,82 @@ class ClientTestIndexing(unittest.TestCase):
             os.remove('temp_file.json')
         except:
             pass
-    
+
+    def test_paging_query_with_rows(self):
+        self.docs = self.rand_docs.get_docs(1000)
+        with gzip.open('temp_file.json.gz','wb') as f:
+            f.write(json.dumps(self.docs).encode('utf-8'))
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        self.commit()
+        queries = 0
+        docs = []
+        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'],{'q':'*:*'}, rows=50):
+            self.assertTrue(len(res.docs) == 50)
+            docs.extend(res.docs)
+            queries +=1
+        self.assertEqual(
+            [x['id'] for x in sorted(docs, key= lambda x: x['id'])],
+            [x['id'] for x in sorted(self.docs, key= lambda x: x['id'])]
+            )
+        self.assertTrue(1000/50 == queries)
+        self.delete_docs()
+        self.commit()
+        try:
+            os.remove('temp_file.json.gz')
+            os.remove('temp_file.json')
+        except:
+            pass   
+
+    def test_paging_query(self):
+        self.docs = self.rand_docs.get_docs(1000)
+        with gzip.open('temp_file.json.gz','wb') as f:
+            f.write(json.dumps(self.docs).encode('utf-8'))
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        self.commit()
+        queries = 0
+        docs = []
+        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'],{'q':'*:*'}):
+            self.assertTrue(len(res.docs) == 1000)
+            docs.extend(res.docs)
+            queries +=1
+        self.assertTrue(queries == 1)
+        self.assertEqual(
+            [x['id'] for x in sorted(docs, key= lambda x: x['id'])],
+            [x['id'] for x in sorted(self.docs, key= lambda x: x['id'])]
+            )
+        self.delete_docs()
+        self.commit()
+        try:
+            os.remove('temp_file.json.gz')
+            os.remove('temp_file.json')
+        except:
+            pass              
             
-            
+    def test_paging_query_with_max(self):
+        self.docs = self.rand_docs.get_docs(1000)
+        with gzip.open('temp_file.json.gz','wb') as f:
+            f.write(json.dumps(self.docs).encode('utf-8'))
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        self.commit()
+        queries = 0
+        docs = []
+        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'], {'q':'*:*'}, rows = 50, max_start = 502):
+            self.assertTrue(len(res.docs) == 50)
+            queries +=1
+            docs.extend(res.docs)
+        ids = [x['id'] for x in docs]
+
+        for item in docs:
+            self.assertTrue(item['id'] in ids)
+
+        self.assertEqual(11, queries)
+        self.delete_docs()
+        self.commit()
+        try:
+            os.remove('temp_file.json.gz')
+            os.remove('temp_file.json')
+        except:
+            pass    
 if __name__=='__main__':
     pass
   
