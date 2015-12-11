@@ -13,12 +13,7 @@ Features
 ~~~~~~~~
 * Response Object to easily extract data from Solr Response
 * Cursor Mark support
-* Indexing:
-
-  * Stream json
-  * Stream json files
-  * Stream gzipped json files
-  * Index local files
+* Indexing: (raw JSON, JSON Files, gzipped JSON)
 * Specify multiple hosts/IPs for SolrCloud for redundancy
 * Basic Managed Schema field management
 * Collection Reindexing/FS Export with cursorMark (Solr 4.9+)

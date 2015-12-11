@@ -17,16 +17,8 @@ Features
 ----------
 * Flexible and simple query mechanism
 * Response Object to easily extract data from Solr Response
-
-  * Range Facets
-  * Facet Pivots
 * Cursor Mark support
-* Indexing:
-
-  * Stream json
-  * Stream json files
-  * Stream gzipped json files
-  * Index local files
+* Indexing (raw JSON, JSON Files, gzipped JSON)
 * Specify multiple hosts/IPs for SolrCloud for redundancy
 * Basic Managed Schema field management
 * IndexManager for storing indexing documents off-line and batch indexing them
@@ -72,7 +64,7 @@ Roadmap
 
 Contributing
 ----------
-I've realized that that there isn't really a well maintained Solr Python library I liked so I put this together. Contributions (code, tests, documentation) are definitely welcome; if you have a question about development please open up an issue on github page. If you have a pull request, please make sure to add tests and that all of them pass before submitting. 
+I've realized that that there isn't really a well maintained Solr Python library I liked so I put this together. Contributions (code, tests, documentation) are definitely welcome; if you have a question about development please open up an issue on github page. If you have a pull request, please make sure to add tests and that all of them pass before submitting. See tests README for testing resources. 
 
 
 Documentation: 
