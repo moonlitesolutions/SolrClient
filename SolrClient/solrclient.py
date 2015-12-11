@@ -175,11 +175,11 @@ class SolrClient:
         :param int start: What position to start with. Default is 0. 
         :param int max_start: Once the start will reach this number, the function will stop. Default is 200000.
 
-        Will page through the result set in increments of :rows: WITHOUT using cursorMark until it has all items \ 
-        or until :max_start: is reached. Use max_start to protect your Solr instance if you are not sure how many items you \
+        Will page through the result set in increments of `row` WITHOUT using cursorMark until it has all items \ 
+        or until `max_start` is reached. Use max_start to protect your Solr instance if you are not sure how many items you \
         will be getting. The default is 200,000, which is still a bit high. 
 
-        Returns an iterator of :class.. SolrResponse objects. For Example::
+        Returns an iterator of SolrResponse objects. For Example::
 
             >>> for res in solr.paging_query('SolrClient_unittest',{'q':'*:*'}):
                     print(res)
