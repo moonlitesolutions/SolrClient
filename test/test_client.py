@@ -43,6 +43,18 @@ class ClientTestIndexing(unittest.TestCase):
         self.solr.commit(test_config['SOLR_COLLECTION'],openSearcher=True)
         sleep(5)
     
+    def test_delete_doc_by_id_with_space(self):
+        self.delete_docs()
+        self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps([{'id':'potato potato','product_name':'potato'}]))
+        self.commit()
+        self.assertTrue(
+            len(self.solr.query(test_config['SOLR_COLLECTION'],{'q':'id:"potato potato"'}).docs) == 1)
+        self.solr.delete_doc_by_id(test_config['SOLR_COLLECTION'],"potato potato")
+        self.commit()
+        self.assertTrue(
+            len(self.solr.query(test_config['SOLR_COLLECTION'],{'q':'id:"potato potato"'}).docs) == 0)
+        self.delete_docs()
+    
     @unittest.skip("Skipping for now")
     def test_access_without_auth(self):
         if not test_config['SOLR_CREDENTIALS'][0]:
