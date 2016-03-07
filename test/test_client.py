@@ -212,6 +212,36 @@ class ClientTestIndexing(unittest.TestCase):
             os.remove('temp_file.json')
         except:
             pass    
+            
+            
+    def test_cursor_query(self):
+        self.docs = self.rand_docs.get_docs(2000)
+        with gzip.open('temp_file.json.gz','wb') as f:
+            f.write(json.dumps(self.docs).encode('utf-8'))
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        self.commit()
+        queries = 0
+        docs = []
+        
+        for res in self.solr.cursor_query(test_config['SOLR_COLLECTION'], {'q':'*:*', 'rows':100}):
+            self.assertTrue(len(res.docs) == 100)
+            queries +=1
+            docs.extend(res.docs)
+            
+        ids = [x['id'] for x in docs]
+
+        for item in docs:
+            self.assertTrue(item['id'] in ids)
+
+        self.delete_docs()
+        self.commit()
+        try:
+            os.remove('temp_file.json.gz')
+            os.remove('temp_file.json')
+        except:
+            pass    
+
+            
 if __name__=='__main__':
     pass
   
