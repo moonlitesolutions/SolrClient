@@ -6,6 +6,7 @@ import gzip
 import shutil
 import random
 import json
+import threading
 from multiprocessing.pool import ThreadPool
 from functools import partial
 from SolrClient.exceptions import *
@@ -46,6 +47,7 @@ class IndexQ():
         self._todo_dir = os.path.join(self._basepath,self._queue_name,'todo')
         self._done_dir = os.path.join(self._basepath,self._queue_name,'done')
         self._locked = False
+        self._rlock = threading.RLock()
         
         #Lock File        
         self._lck = os.path.join(self._qpathdir,'index.lock')
@@ -87,7 +89,9 @@ class IndexQ():
                 return self._write_file(item)
             else:
                 raise ValueError("Not the right data submitted. Make sure you are sending a dict or list of dicts")
-        return self._preprocess(item,finalize)
+        with self._rlock:
+            res = self._preprocess(item,finalize)
+        return res
 
     def _write_file(self,content):
         while True:
