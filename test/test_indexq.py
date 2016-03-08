@@ -5,6 +5,7 @@ import json
 import os
 from time import sleep
 import random
+from multiprocessing.pool import ThreadPool
 from SolrClient import SolrClient, IndexQ
 from SolrClient.exceptions import *
 from .test_config import test_config
