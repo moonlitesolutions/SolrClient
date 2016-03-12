@@ -24,10 +24,11 @@ class IndexQ():
     Items get saved to the todo directory and once an item is processed it gets moved to the done directory. Items are processed in chronological order. 
     '''
 
-    def __init__(self, basepath, queue, compress=False, size=0, devel=False, threshold = 0.90, **kwargs ):
+    def __init__(self, basepath, queue, compress=False, size=0, devel=False, threshold = 0.90, log = None, **kwargs ):
         '''
         :param string basepath: Path to the root of the indexQ. All other queues will get created underneath this. 
         :param string queue: Name of the queue. 
+        :param log: Logging instance that you want it to log to. 
         :param bool compress: If todo files should be compressed, set to True if there is going to be a lot of data and these files will be sitting there for a while.
         :param int size: Internal buffer size (MB) that queued data must be to get written to the file system. If not passed, the data will be written to the filesystem as it is sent to IndexQ, otherwise they will be written when the buffer reaches 90%. 
         
@@ -35,7 +36,7 @@ class IndexQ():
             i = IndexQ('/data/indexq','parsed_data')
             
         '''
-        self.logger = logging.getLogger(__package__)
+        self.logger = log or logging.getLogger(__package__)
         
         self._basepath = basepath
         self._queue_name = queue
