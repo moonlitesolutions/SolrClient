@@ -7,6 +7,8 @@ from .transport import TransportRequests
 from .schema import Schema
 from .exceptions import *
 from .solrresp import SolrResponse
+from .collections import Collections
+from .zk import ZK
 
 class SolrClient:
     '''
@@ -17,15 +19,19 @@ class SolrClient:
     :param transport: Transport class to use. So far only requests is supported. 
     :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level. 
     '''
-    def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests, devel=False, auth=None):
+    def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests, devel=False, auth=None, log=None):
   
         self.devel = devel
         self.host = host
         
-        self.logger = logging.getLogger(__package__)
-        self.schema = Schema(self)
         self.transport = transport(self, host=host, auth=auth, devel=devel)
+        self.logger = log if log else logging.getLogger(__package__)
+        self.schema = Schema(self)
+        self.collections = Collections(self, self.logger)
         
+    def get_zk(self):
+        return ZK(self, self.logger)
+    
     def commit(self,collection,openSearcher=False,softCommit=False,waitSearcher=True,commit=True,**kwargs):
         '''
         :param str collection: The name of the collection for the request
