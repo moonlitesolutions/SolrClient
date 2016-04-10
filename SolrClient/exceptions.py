@@ -13,3 +13,8 @@ class ConnectionError(Exception):
     '''
     Errors connecting to Solr
     '''
+    
+class ZookeeperError(Exception):
+    '''
+    Errors connecting to Zookeeper
+    '''
