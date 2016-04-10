@@ -280,7 +280,7 @@ class IndexQ():
 
     def get_all_json_from_indexq(self):
         '''
-        Gets all data from the todo files in indexq and returns one huge dictionary of all data. 
+        Gets all data from the todo files in indexq and returns one huge list of all data. 
         '''
         files = self.get_all_as_list()
         out = []
