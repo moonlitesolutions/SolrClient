@@ -19,6 +19,9 @@ class SolrResponse:
                 self.groups[field + '_ngroups'] = data['grouped'][field]['ngroups']
                 self.groups[field + '_matches'] = data['grouped'][field]['matches']
                 self.docs = data['grouped'][field]['groups']
+        else:
+            self.grouped = False
+            self.docs = {}
         
         for doc in self.docs:
             for field in doc:
