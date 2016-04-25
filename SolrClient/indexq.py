@@ -73,11 +73,13 @@ class IndexQ():
         dt = "{}-{}-{}-{}-{}-{}-{}".format(str(date.year),str(date.month),str(date.day),str(date.hour),str(date.minute),str(date.second),str(random.randint(0,10000)))
         return self._output_filename_pattern.format(dt) 
             
-    def add(self, item = None, finalize = False):
+    def add(self, item=None, finalize=False, callback=None):
         '''
         Takes a string, dictionary or list of items for adding to queue. To help troubleshoot it will output the updated buffer size, however when the content gets written it will output the file path of the new file. Generally this can be safely discarded. 
         
         :param <dict,list> item: Item to add to the queue. If dict will be converted directly to a list and then to json. List must be a list of dictionaries. If a string is submitted, it will be written out as-is immediately and not buffered. 
+        :param bool finalize: If items are buffered internally, it will flush them to disk and return the file name.
+        :param callback: A callback function that will be called when the item gets written to disk. It will be passed one position argument, the file path of the file written. Note that errors from the callback method will not be re-raised here. 
         '''
         if item:
             if type(item) is list:
@@ -91,10 +93,10 @@ class IndexQ():
             else:
                 raise ValueError("Not the right data submitted. Make sure you are sending a dict or list of dicts")
         with self._rlock:
-            res = self._preprocess(item,finalize)
+            res = self._preprocess(item, finalize, callback)
         return res
 
-    def _write_file(self,content):
+    def _write_file(self, content):
         while True:
             path = os.path.join(self._todo_dir,self._gen_file_name())
             if self._compress:
@@ -111,7 +113,7 @@ class IndexQ():
         return path
 
         
-    def _buffer(self,size,callback):
+    def _buffer(self, size, callback):
         _c = {
             'size': 0,
             'callback': callback,
@@ -119,7 +121,8 @@ class IndexQ():
             'buf': []
         }
         self.logger.debug("Starting Buffering Queue with Size of {}".format(size))
-        def inner(item = None,finalize = False):
+        def inner(item=None, finalize=False, listener=None):
+            #Listener is the external callback specific by the user. Need to change the names later a bit. 
             if item:
                 #Buffer Item
                 [_c['buf'].append(x) for x in item]
@@ -135,6 +138,12 @@ class IndexQ():
                     else:
                         self.logger.debug("Buffer Filled, writing out")
                 res = _c['callback'](json.dumps(_c['buf'], indent=0, sort_keys=True))
+                if listener:
+                    try:
+                        listener(res)
+                    except Exception as e:
+                        self.logger.error("Problems in the Callback specified")
+                        self.logger.exception(e)
                 if res:
                     _c['buf'] = []
                     _c['size'] = 0
@@ -215,14 +224,14 @@ class IndexQ():
                 return inner(self)
         raise RuntimeError("RuntimeError: Index Already Locked")
     
-    def complete(self,filepath):
+    def complete(self, filepath):
         '''
         Marks the item as complete by moving it to the done directory and optionally gzipping it. 
         '''
         
         #TODO: Implement compress option to also gzip these completed items
         if not os.path.exists(filepath):
-            raise("Can't Complete {}, it doesn't exist".format(filepath))
+            raise FileNotFoundError("Can't Complete {}, it doesn't exist".format(filepath))
         if self._devel: self.logger.debug("Completing - {} ".format(filepath))
         newpath = os.path.join(self._done_dir,os.path.split(filepath)[-1])
         try:

@@ -407,3 +407,22 @@ class TestIndexQ(unittest.TestCase):
         d = index.get_all_json_from_indexq()
         self.assertEqual(len(d), len(docs))
         self.assertEqual(sorted(d, key=lambda x: x['id']), sorted(docs, key=lambda x: x['id']))
+        
+    def test_add_callback_no_size(self):
+        docs = self.rand_docs.get_docs(5)
+        index = IndexQ(test_config['indexqbase'], 'testq')
+        temp = []
+        def cb(path):
+            temp.append(path)
+        t = index.add(docs[0], callback=cb)
+        self.assertTrue(t in temp)
+    
+    def test_add_callback_with_size(self):
+        docs = self.rand_docs.get_docs(5)
+        index = IndexQ(test_config['indexqbase'], 'testq', size =1)
+        temp = []
+        def cb(path):
+            temp.append(path)
+        t = index.add(docs[0], callback=cb)
+        t = index.add(docs[1], callback=cb, finalize=True)
+        self.assertTrue(t in temp)
