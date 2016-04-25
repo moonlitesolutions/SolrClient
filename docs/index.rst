@@ -52,6 +52,7 @@ Components
    Index Queue <IndexQ>
    Schema <Schema>
    Reindexer <Reindexer>
+   Collections <Collections>
 
 Roadmap
 -------

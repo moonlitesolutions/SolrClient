@@ -17,5 +17,6 @@ setup(
     ],
     extras_require = {
       'psutil' : ["psutil"]
+      'kazoo' : ["kazoo==2.2.1"]
     }
 )

@@ -7,6 +7,8 @@ from .transport import TransportRequests
 from .schema import Schema
 from .exceptions import *
 from .solrresp import SolrResponse
+from .collections import Collections
+from .zk import ZK
 
 class SolrClient:
     '''
@@ -17,15 +19,19 @@ class SolrClient:
     :param transport: Transport class to use. So far only requests is supported. 
     :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level. 
     '''
-    def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests, devel=False, auth=None):
+    def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests, devel=False, auth=None, log=None):
   
         self.devel = devel
         self.host = host
         
-        self.logger = logging.getLogger(__package__)
-        self.schema = Schema(self)
         self.transport = transport(self, host=host, auth=auth, devel=devel)
+        self.logger = log if log else logging.getLogger(__package__)
+        self.schema = Schema(self)
+        self.collections = Collections(self, self.logger)
         
+    def get_zk(self):
+        return ZK(self, self.logger)
+    
     def commit(self,collection,openSearcher=False,softCommit=False,waitSearcher=True,commit=True,**kwargs):
         '''
         :param str collection: The name of the collection for the request
@@ -104,7 +110,7 @@ class SolrClient:
         else:
             return False
         
-    def delete_doc_by_id(self,collection,id,**kwargs):
+    def delete_doc_by_id(self, collection, doc_id, **kwargs):
         '''
         :param str collection: The name of the collection for the request
         :param str id: ID of the document to be deleted. Can specify '*' to delete everything. 
@@ -114,7 +120,9 @@ class SolrClient:
             >>> solr.delete_doc_by_id('SolrClient_unittest','changeme')
         
         '''
-        temp = {"delete": {"query":"id:{}".format(id)}}
+        if ' ' in doc_id:
+            doc_id = '"{}"'.format(doc_id)
+        temp = {"delete": {"query":'id:{}'.format(doc_id)}}
         resp, con_inf = self.transport.send_request(method='POST', endpoint='update', collection=collection, data=json.dumps(temp), *kwargs)
         return resp
 
@@ -194,4 +202,32 @@ class SolrClient:
                 yield res
                 start += rows
             if res.get_results_count() < rows or start > max_start:
+                break
+                
+                
+    def cursor_query(self, collection, query):
+        '''
+        :param str collection: The name of the collection for the request. 
+        :param dict query: Dictionary of solr args. 
+
+        Will page through the result set in increments using cursorMark until it has all items. Sort is required for cursorMark \
+        queries, if you don't specify it, the default is 'id desc'. 
+
+        Returns an iterator of SolrResponse objects. For Example::
+
+            >>> for res in solr.cursor_query('SolrClient_unittest',{'q':'*:*'}):
+                    print(res)
+        '''
+        cursor = '*'
+        if 'sort' not in query:
+            query['sort'] = 'id desc'
+        while True:
+            query['cursorMark'] = cursor
+            #Get data with starting cursorMark
+            results = self.query(collection, query)
+            if results.get_results_count():
+                cursor = results.get_cursor()
+                yield results
+            else:
+                self.logger.debug("Got zero Results with cursor: {}".format(cursor))
                 break
