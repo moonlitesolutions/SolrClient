@@ -16,7 +16,7 @@ setup(
         "requests>=2.2.1"
     ],
     extras_require = {
-      'psutil' : ["psutil"]
+      'psutil' : ["psutil"],
       'kazoo' : ["kazoo==2.2.1"]
     }
 )
