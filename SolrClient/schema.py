@@ -9,7 +9,7 @@ class Schema():
         More info on Solr can be found here: https://cwiki.apache.org/confluence/display/solr/Schema+API
         
     '''
-    def __init__(self, solr):
+    def __init__(self,solr):
         self.solr = solr
         self.coll_api = "/admin/collections"
         self.logger = logging.getLogger('SolrClient.Schema')

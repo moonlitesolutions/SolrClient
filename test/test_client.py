@@ -43,18 +43,6 @@ class ClientTestIndexing(unittest.TestCase):
         self.solr.commit(test_config['SOLR_COLLECTION'],openSearcher=True)
         sleep(5)
     
-    def test_delete_doc_by_id_with_space(self):
-        self.delete_docs()
-        self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps([{'id':'potato potato','product_name':'potato'}]))
-        self.commit()
-        self.assertTrue(
-            len(self.solr.query(test_config['SOLR_COLLECTION'],{'q':'id:"potato potato"'}).docs) == 1)
-        self.solr.delete_doc_by_id(test_config['SOLR_COLLECTION'],"potato potato")
-        self.commit()
-        self.assertTrue(
-            len(self.solr.query(test_config['SOLR_COLLECTION'],{'q':'id:"potato potato"'}).docs) == 0)
-        self.delete_docs()
-    
     @unittest.skip("Skipping for now")
     def test_access_without_auth(self):
         if not test_config['SOLR_CREDENTIALS'][0]:
@@ -212,36 +200,6 @@ class ClientTestIndexing(unittest.TestCase):
             os.remove('temp_file.json')
         except:
             pass    
-            
-            
-    def test_cursor_query(self):
-        self.docs = self.rand_docs.get_docs(2000)
-        with gzip.open('temp_file.json.gz','wb') as f:
-            f.write(json.dumps(self.docs).encode('utf-8'))
-        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
-        self.commit()
-        queries = 0
-        docs = []
-        
-        for res in self.solr.cursor_query(test_config['SOLR_COLLECTION'], {'q':'*:*', 'rows':100}):
-            self.assertTrue(len(res.docs) == 100)
-            queries +=1
-            docs.extend(res.docs)
-            
-        ids = [x['id'] for x in docs]
-
-        for item in docs:
-            self.assertTrue(item['id'] in ids)
-
-        self.delete_docs()
-        self.commit()
-        try:
-            os.remove('temp_file.json.gz')
-            os.remove('temp_file.json')
-        except:
-            pass    
-
-            
 if __name__=='__main__':
     pass
   

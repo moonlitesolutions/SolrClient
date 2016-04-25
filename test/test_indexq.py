@@ -5,7 +5,6 @@ import json
 import os
 from time import sleep
 import random
-from multiprocessing.pool import ThreadPool
 from SolrClient import SolrClient, IndexQ
 from SolrClient.exceptions import *
 from .test_config import test_config
@@ -363,66 +362,3 @@ class TestIndexQ(unittest.TestCase):
             index.index(solr,test_config['SOLR_COLLECTION'])
         self.assertEqual(index.get_all_as_list()[0],todo_file)
         self.assertFalse(index._is_locked())
-        
-    def test_thread_pool_low(self):
-        '''
-        Index data using multiple threads. 
-        Verity that each thread 
-        '''
-        docs = self.rand_docs.get_docs(5)
-        threads = 5
-        index = IndexQ(test_config['indexqbase'],'testq', size = 1)
-        with ThreadPool(threads) as p:
-            p.map(index.add, docs)
-        self.check_file_contents(index.add(finalize=True), docs)
-        
-    def test_thread_pool_mid(self):
-        '''
-        Index data using multiple threads. 
-        Verity that each thread 
-        '''
-        docs = self.rand_docs.get_docs(5000)
-        threads = 5
-        index = IndexQ(test_config['indexqbase'],'testq', size = 1)
-        with ThreadPool(threads) as p:
-            p.map(index.add, docs)
-        index.add(finalize=True)
-        d = index.get_all_json_from_indexq()
-        self.assertEqual(sorted(d, key=lambda x: x['id']), sorted(docs, key=lambda x: x['id']))
-
-    def test_thread_pool_high(self):
-        '''
-        Index data using multiple threads. 
-        Verity that each thread 
-        '''
-        docs = self.rand_docs.get_docs(25000)
-        index = IndexQ(test_config['indexqbase'],'testq', size = .1, devel=True)
-        for dir in ['_todo_dir','_done_dir']:
-            [os.remove(x) for x in index.get_all_as_list(dir=dir)]
-        threads = 25
-        
-        with ThreadPool(threads) as p:
-            p.map(index.add, docs)
-        index.add(finalize=True)
-        d = index.get_all_json_from_indexq()
-        self.assertEqual(len(d), len(docs))
-        self.assertEqual(sorted(d, key=lambda x: x['id']), sorted(docs, key=lambda x: x['id']))
-        
-    def test_add_callback_no_size(self):
-        docs = self.rand_docs.get_docs(5)
-        index = IndexQ(test_config['indexqbase'], 'testq')
-        temp = []
-        def cb(path):
-            temp.append(path)
-        t = index.add(docs[0], callback=cb)
-        self.assertTrue(t in temp)
-    
-    def test_add_callback_with_size(self):
-        docs = self.rand_docs.get_docs(5)
-        index = IndexQ(test_config['indexqbase'], 'testq', size =1)
-        temp = []
-        def cb(path):
-            temp.append(path)
-        t = index.add(docs[0], callback=cb)
-        t = index.add(docs[1], callback=cb, finalize=True)
-        self.assertTrue(t in temp)

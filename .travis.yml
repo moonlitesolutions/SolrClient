@@ -2,11 +2,11 @@ language: python
 python:
   - "3.3"
   - "3.4"
-install: "pip install requests psutil kazoo"
+install: "pip install requests psutil"
 script: 
   - python3 -m unittest test.test_resp
   - python3 -m unittest test.test_client
-  - python3 -m unittest test.test_schema
+  - python3 -m unittest test.test_collections
   - python3 -m unittest test.test_indexq
 env:
   secure: A//Pg9rJwTSAunuGBy4RGgR/7HCfF5hhmmLgqTo3VWX6b0My8x//IrC7NSBXP9SOKHfnvwgytAPE0NFYS3vEpDd7kpq0k5lpqjrEmI1Vzh6iFSfMno9Yu9pUSpWwOYDEQQ8Z2Fcdhz3ihPn9Q2QhO2FMAbhmSUQZ9zQSjeHSQfq11dECkZYfIwzE+EX4q9/pGGguuX2KJQBH450bJZEqeI2J2GH8yKIyrQFbOHtjuPcsgDOsjisNmaAPtBTg9akxMiGLRyuW2jgSFvX3y5mIkLUoZozg3HneVcHTaZnk3SsqhvdJhITfUscaPGb1MrFHlT0y/tCPEV5T1UsRkNDrv1Ub4wW3e9CMb1ShvAaas1RTcioSoLhWT86HcAuQI/XiiUAnvOu894WczNEGcL8dXo5xEO2OEjGq6DQp5q5wQfzKKBDB6QmdYzPPaTAHAE7V2qtzSXJRaWGEK8AQC6modPPtsVXxVoETd1vJh39mbfKoYxRq4z3Jn3jyRnHydQ2bi9mYGoLOye8McwewZu3coYmtDLSu5aWk4ZuM2emAX+MQvvlGKQexYimnGqMlc4NFZBsFhYsJKVO4ZHt9aJ5DrZMtpHLlzc/rKjL8SHhIXrJidKwReNmvXhQsmWlDl/FmJnc2R3fEthic9fUMNfmMBWLlQMyZ04qOAWIt5Cdrc4M=

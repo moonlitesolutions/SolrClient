@@ -21,7 +21,7 @@ class TransportRequests(TransportBase):
             self.session.auth = (self.auth[0],self.auth[1])
         
     
-    def _send(self, host, method='GET', **kwargs):
+    def _send(self,host,method='GET',**kwargs):
         url = None
         params = kwargs['params'] if 'params' in kwargs else {}
         if 'wt' not in params:
@@ -37,7 +37,7 @@ class TransportRequests(TransportBase):
         data = kwargs['data'] if 'data' in kwargs else {}
         if 'endpoint' in kwargs:
             if 'collection' in kwargs:
-                url = "{}{}/{}".format(host,kwargs['collection'], kwargs['endpoint'])
+                url = "{}{}/{}".format(host,kwargs['collection'],kwargs['endpoint'])
             else:
                 url = host + kwargs['endpoint']
         else:
@@ -72,3 +72,6 @@ class TransportRequests(TransportBase):
                 raise SolrError("500 - " + res.url + " "+res.text)
             else:
                 raise SolrError(res.url+" "+res.text)
+                
+        
+        

@@ -3,7 +3,6 @@ import os
 test_config = {
     'SOLR_SERVER': [os.environ.get('SOLR_TEST_URL')],
     'SOLR_COLLECTION': 'SolrClient_unittest',
-    'temp_data': os.getcwd()+os.sep+'temp',
     'SOLR_REINDEXER_COLLECTION_S': 'source_coll',
     'SOLR_REINDEXER_COLLECTION_D': 'dest_coll',
     'SOLR_CREDENTIALS': (os.environ.get('SOLR_TEST_USER'), os.environ.get('SOLR_TEST_PASS')),

@@ -6,7 +6,6 @@ import gzip
 import shutil
 import random
 import json
-import threading
 from multiprocessing.pool import ThreadPool
 from functools import partial
 from SolrClient.exceptions import *
@@ -24,11 +23,10 @@ class IndexQ():
     Items get saved to the todo directory and once an item is processed it gets moved to the done directory. Items are processed in chronological order. 
     '''
 
-    def __init__(self, basepath, queue, compress=False, size=0, devel=False, threshold = 0.90, log = None, **kwargs ):
+    def __init__(self, basepath, queue, compress=False, size=0, devel=False, threshold = 0.90, **kwargs ):
         '''
         :param string basepath: Path to the root of the indexQ. All other queues will get created underneath this. 
         :param string queue: Name of the queue. 
-        :param log: Logging instance that you want it to log to. 
         :param bool compress: If todo files should be compressed, set to True if there is going to be a lot of data and these files will be sitting there for a while.
         :param int size: Internal buffer size (MB) that queued data must be to get written to the file system. If not passed, the data will be written to the filesystem as it is sent to IndexQ, otherwise they will be written when the buffer reaches 90%. 
         
@@ -36,7 +34,7 @@ class IndexQ():
             i = IndexQ('/data/indexq','parsed_data')
             
         '''
-        self.logger = log or logging.getLogger(__package__)
+        self.logger = logging.getLogger(__package__)
         
         self._basepath = basepath
         self._queue_name = queue
@@ -48,7 +46,6 @@ class IndexQ():
         self._todo_dir = os.path.join(self._basepath,self._queue_name,'todo')
         self._done_dir = os.path.join(self._basepath,self._queue_name,'done')
         self._locked = False
-        self._rlock = threading.RLock()
         
         #Lock File        
         self._lck = os.path.join(self._qpathdir,'index.lock')
@@ -73,13 +70,11 @@ class IndexQ():
         dt = "{}-{}-{}-{}-{}-{}-{}".format(str(date.year),str(date.month),str(date.day),str(date.hour),str(date.minute),str(date.second),str(random.randint(0,10000)))
         return self._output_filename_pattern.format(dt) 
             
-    def add(self, item=None, finalize=False, callback=None):
+    def add(self, item = None, finalize = False):
         '''
         Takes a string, dictionary or list of items for adding to queue. To help troubleshoot it will output the updated buffer size, however when the content gets written it will output the file path of the new file. Generally this can be safely discarded. 
         
         :param <dict,list> item: Item to add to the queue. If dict will be converted directly to a list and then to json. List must be a list of dictionaries. If a string is submitted, it will be written out as-is immediately and not buffered. 
-        :param bool finalize: If items are buffered internally, it will flush them to disk and return the file name.
-        :param callback: A callback function that will be called when the item gets written to disk. It will be passed one position argument, the file path of the file written. Note that errors from the callback method will not be re-raised here. 
         '''
         if item:
             if type(item) is list:
@@ -92,11 +87,9 @@ class IndexQ():
                 return self._write_file(item)
             else:
                 raise ValueError("Not the right data submitted. Make sure you are sending a dict or list of dicts")
-        with self._rlock:
-            res = self._preprocess(item, finalize, callback)
-        return res
+        return self._preprocess(item,finalize)
 
-    def _write_file(self, content):
+    def _write_file(self,content):
         while True:
             path = os.path.join(self._todo_dir,self._gen_file_name())
             if self._compress:
@@ -113,7 +106,7 @@ class IndexQ():
         return path
 
         
-    def _buffer(self, size, callback):
+    def _buffer(self,size,callback):
         _c = {
             'size': 0,
             'callback': callback,
@@ -121,8 +114,7 @@ class IndexQ():
             'buf': []
         }
         self.logger.debug("Starting Buffering Queue with Size of {}".format(size))
-        def inner(item=None, finalize=False, listener=None):
-            #Listener is the external callback specific by the user. Need to change the names later a bit. 
+        def inner(item = None,finalize = False):
             if item:
                 #Buffer Item
                 [_c['buf'].append(x) for x in item]
@@ -138,12 +130,6 @@ class IndexQ():
                     else:
                         self.logger.debug("Buffer Filled, writing out")
                 res = _c['callback'](json.dumps(_c['buf'], indent=0, sort_keys=True))
-                if listener:
-                    try:
-                        listener(res)
-                    except Exception as e:
-                        self.logger.error("Problems in the Callback specified")
-                        self.logger.exception(e)
                 if res:
                     _c['buf'] = []
                     _c['size'] = 0
@@ -224,14 +210,14 @@ class IndexQ():
                 return inner(self)
         raise RuntimeError("RuntimeError: Index Already Locked")
     
-    def complete(self, filepath):
+    def complete(self,filepath):
         '''
         Marks the item as complete by moving it to the done directory and optionally gzipping it. 
         '''
         
         #TODO: Implement compress option to also gzip these completed items
         if not os.path.exists(filepath):
-            raise FileNotFoundError("Can't Complete {}, it doesn't exist".format(filepath))
+            raise("Can't Complete {}, it doesn't exist".format(filepath))
         if self._devel: self.logger.debug("Completing - {} ".format(filepath))
         newpath = os.path.join(self._done_dir,os.path.split(filepath)[-1])
         try:
@@ -289,7 +275,7 @@ class IndexQ():
 
     def get_all_json_from_indexq(self):
         '''
-        Gets all data from the todo files in indexq and returns one huge list of all data. 
+        Gets all data from the todo files in indexq and returns one huge dictionary of all data. 
         '''
         files = self.get_all_as_list()
         out = []
