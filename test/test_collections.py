@@ -59,18 +59,18 @@ class test_collections(unittest.TestCase):
     def test__check_shard_count1(self):
         self.assertFalse(
             self.solr.collections._check_shard_status( {'core_node2': {'state': 'active', 'doc_count': 6453698}, 
-                                                        'core_node3': {'state': 'down', 'doc_count': False}})
+                                                        'core_node3': {'state': 'down', 'doc_count': False}}))
         self.assertTrue(
             self.solr.collections._check_shard_status( {'core_node2': {'state': 'active', 'doc_count': 6453698}, 
-                                                        'core_node3': {'state': 'down', 'doc_count': 6453698}})
+                                                        'core_node3': {'state': 'down', 'doc_count': 6453698}}))
         
     def test__check_shard_status1(self):
         self.assertFalse(
             self.solr.collections._check_shard_status( {'core_node2': {'state': 'active', 'doc_count': 6453698}, 
-                                                        'core_node3': {'state': 'down', 'doc_count': False}})
+                                                        'core_node3': {'state': 'down', 'doc_count': False}}))
         
         self.assertTrue(
             self.solr.collections._check_shard_status( {'core_node2': {'state': 'active', 'doc_count': 6453698}, 
-                                                        'core_node3': {'state': 'active', 'doc_count': False}})
+                                                        'core_node3': {'state': 'active', 'doc_count': False}}))
 if __name__=='__main__':
     pass
