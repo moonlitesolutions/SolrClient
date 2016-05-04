@@ -64,7 +64,7 @@ class TransportBase:
     
     
     def _log_connection_error(self, method, full_url, body, duration, status_code=None, exception=None):
-        self.logger.warning("Connection Error: [{}] {} - {} - {}".format(status_code, method, url, body))
+        self.logger.warning("Connection Error: [{}] {} - {} - {}".format(status_code, method, full_url, body))
         
         
     

@@ -52,7 +52,7 @@ class SolrClient:
             
         self.logger.debug("Sending Commit to Collection {}".format(collection))
         try:
-            resp, con_inf = self.transport.send_request(method='GET',endpoint='update',collection=collection, params=comm,**kwargs)
+            resp, con_inf = self.transport.send_request(method='GET',endpoint='update', collection=collection, params=comm,**kwargs)
         except Exception as e:
             raise
         self.logger.debug("Commit Successful, QTime is {}".format(resp['responseHeader']['QTime']))

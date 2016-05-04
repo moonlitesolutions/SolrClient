@@ -56,24 +56,21 @@ class test_collections(unittest.TestCase):
         self.assertTrue(len(c.keys()) > 1)
 
                 
-    def test_check_collection_counts_callback(self):
-        cb = Mock()
-        self.solr.collections.check_collection_counts(
-                {'banana_int16': {'shard1': {'banana_int16_shard1_replica1': 2,
-                                                'banana_int16_shard1_replica2': 0}}},
-                cb
-                )
-        cb.assert_called_with({'banana_int16_shard1_replica2': 0, 'banana_int16_shard1_replica1': 2})
-    
-    def test_check_collection_counts_bad_callback(self):
-        a = 'NOT a callable'
-        with self.assertRaises(TypeError):
-            self.solr.collections.check_collection_counts(
-                {'banana_int16': {'shard1': {'banana_int16_shard1_replica1': 2,
-                                                'banana_int16_shard1_replica2': 0}}},
-                a
-                )
+    def test__check_shard_count1(self):
+        self.assertFalse(
+            self.solr.collections._check_shard_status( {'core_node2': {'state': 'active', 'doc_count': 6453698}, 
+                                                        'core_node3': {'state': 'down', 'doc_count': False}})
+        self.assertTrue(
+            self.solr.collections._check_shard_status( {'core_node2': {'state': 'active', 'doc_count': 6453698}, 
+                                                        'core_node3': {'state': 'down', 'doc_count': 6453698}})
         
-    
+    def test__check_shard_status1(self):
+        self.assertFalse(
+            self.solr.collections._check_shard_status( {'core_node2': {'state': 'active', 'doc_count': 6453698}, 
+                                                        'core_node3': {'state': 'down', 'doc_count': False}})
+        
+        self.assertTrue(
+            self.solr.collections._check_shard_status( {'core_node2': {'state': 'active', 'doc_count': 6453698}, 
+                                                        'core_node3': {'state': 'active', 'doc_count': False}})
 if __name__=='__main__':
     pass

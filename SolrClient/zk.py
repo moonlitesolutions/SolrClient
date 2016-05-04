@@ -38,7 +38,30 @@ class ZK():
             self.logger.error("Couldn't Establish Connection To Zookeeper")
             raise(e)
 
-            
+    def check_zk(self):
+        import telnetlib
+        temp = self.zk_hosts.split('/')
+        zks = temp[0].split(',')
+        status = {}
+        for zk in zks:
+            self.logger.debug("Checking {}".format(zk))
+            host, port = zk.split(':')
+            try:
+                t = telnetlib.Telnet(host, port=int(port))
+                t.write('mntr'.encode('ascii'))
+                r = t.read_all()
+                for out in r.decode('utf-8').split('\n'):
+                    if out:
+                        param, val = out.split('\t')
+                        if param == 'zk_server_state':
+                            status[zk] = val
+            except Exception as e:
+                self.logger.error("Unable to reach ZK: {}".format(zk))
+                self.logger.exception(e)
+                status[zk] = 'down'
+        #assert len(zks) == len(status)
+        return status
+        
     def _get_path(self, path):
         if self.kz.exists(path):
             return self.kz.get(path)

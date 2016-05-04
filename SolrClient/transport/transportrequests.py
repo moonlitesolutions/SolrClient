@@ -33,7 +33,6 @@ class TransportRequests(TransportBase):
                 
         if not host.endswith('/'):
             host += '/'
-            
         data = kwargs['data'] if 'data' in kwargs else {}
         if 'endpoint' in kwargs:
             if 'collection' in kwargs:
@@ -58,7 +57,7 @@ class TransportRequests(TransportBase):
             self._log_connection_error(method, url, body, time.time() - start, exception=e)
             raise ConnectionError('TIMEOUT', str(e), e)
         except requests.ConnectionError as e:
-            self._log_connection_error(method, url, body, time.time() - start, exception=e)
+            self._log_connection_error(method, url, str(e), time.time() - start, exception=e)
             raise ConnectionError('N/A', str(e), e)
         
         if (200 <= res.status_code < 300):
