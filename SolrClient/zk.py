@@ -16,7 +16,9 @@ except ImportError:
 class ZK():
     def __init__(self, solr, log):
         '''
-        Helper class for working with Solr Zookeeper. 
+        Helper class for working with Solr Zookeeper config and collections. 
+
+        Still very experimental, I wouldn't even use it myself if I didn't like to live on the edge. 
         '''
         if not kz_imported:
             raise ImportError("To use the ZK Class you need to have Kazoo Client installed")
@@ -39,6 +41,13 @@ class ZK():
             raise(e)
 
     def check_zk(self):
+        '''
+        Will attempt to telnet to each zookeeper that is used by SolrClient and issue 'mntr' command. Response is parsed to check to see if the 
+        zookeeper node is a leader or a follower and returned as a dict. 
+
+        If the telnet collection fails or the proper response is not parsed, the zk node will be listed as 'down' in the dict. Desired values are
+        either follower or leader. 
+        '''
         import telnetlib
         temp = self.zk_hosts.split('/')
         zks = temp[0].split(',')
@@ -89,6 +98,11 @@ class ZK():
     def copy_config(self, original, new):
         '''
         Copies collection configs into a new folder. Can be used to create new collections based on existing configs. 
+
+        Basically, copies all nodes under /configs/original to /configs/new.
+
+        :param original str: ZK name of original config
+        :param new str: New name of the ZK config. 
         '''
         if not self.kz.exists('/configs/{}'.format(original)):
             raise ZookeeperError("Collection doesn't exist in Zookeeper. Current Collections are: {}".format(self.kz.get_children('/configs')))
@@ -99,7 +113,11 @@ class ZK():
     
     def download_collection_configs(self, collection, fs_path):
         '''
-        Downloads ZK Directory to the FileSystem
+        Downloads ZK Directory to the FileSystem.
+
+        :param collection str: Name of the collection (zk config name)
+        :param fs_path str: Destination filesystem path. 
+        :
         '''
         if not self.kz.exists('/configs/{}'.format(collection)):
             raise ZookeeperError("Collection doesn't exist in Zookeeper. Current Collections are: {} ".format(self.kz.get_children('/configs')))
@@ -151,5 +169,8 @@ class ZK():
                 self._upload_dir(src+"/{}".format(child), dst+"/{}".format(child))
                 
     def get_item(self, path):
+        '''
+        Returns a specified zookeeper node. 
+        '''
         return self.kz.get(path)
     

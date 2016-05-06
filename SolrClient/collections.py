@@ -23,7 +23,7 @@ class Collections():
         Documentation is here: https://cwiki.apache.org/confluence/display/solr/Collections+API
         
         :param string action: Name of the collection for the action
-        :param string args: Dictionary of specific parameters for action
+        :param dict args: Dictionary of specific parameters for action
         '''
         args['action'] = action.upper()
         
@@ -41,7 +41,9 @@ class Collections():
     
     def clusterstatus(self):
         '''
-        Returns a slightly slimmed down version of the clusterstatus api command. 
+        Returns a slightly slimmed down version of the clusterstatus api command. It also gets count of documents in each shard on each replica and returns
+        it as doc_count key for each replica. 
+
         '''
 
         res, con_info =  self.api('clusterstatus')
@@ -100,6 +102,12 @@ class Collections():
 
         
     def check_status(self, status=None):
+        '''
+        Checks status of each collection and shard to make sure that:
+          a) Cluster state is active
+          b) Number of docs matches across replicas for a given shard. 
+        Returns a dict of results for custom alerting. 
+        '''
         self.SHARD_CHECKS = [
             {'check_msg': 'Bad Core Count Check', 'f': self._check_shard_count},
             {'check_msg': 'Bad Shard Cluster Status', 'f': self._check_shard_status}

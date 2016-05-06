@@ -53,6 +53,7 @@ Components
    Schema <Schema>
    Reindexer <Reindexer>
    Collections <Collections>
+   ZooKeeper <ZK>
 
 Roadmap
 -------

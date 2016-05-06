@@ -1,10 +1,10 @@
-SolrClient.Collections module
+SolrClient.ZK module
 -----------------------------
-Solr Collections api interface. 
+Solr ZK api interface. 
 
 
 .. automodule:: SolrClient
-.. autoclass:: Collections
+.. autoclass:: ZK
     :members:
     :undoc-members:
     :show-inheritance:
