@@ -20,7 +20,7 @@ class TestIndexQ(unittest.TestCase):
     def setUpClass(self):
         self.rand_docs = RandomTestData()
         self.docs = self.rand_docs.get_docs(50)
-        self.devel = False
+        self.devel = True
         if self.devel:
             logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 
@@ -426,3 +426,48 @@ class TestIndexQ(unittest.TestCase):
         t = index.add(docs[0], callback=cb)
         t = index.add(docs[1], callback=cb, finalize=True)
         self.assertTrue(t in temp)
+
+    def test_get_multi_q1(self):
+        docs = self.rand_docs.get_docs(5000)
+        log = logging.getLogger()
+        index = IndexQ(test_config['indexqbase'], 'testq', size = 1, log = log)
+        q = index.get_multi_q()
+        for item in docs:
+            q.put(item)
+        q.put('STOP')
+        index.join_indexer()
+
+        self.assertEqual(docs, index.get_all_json_from_indexq())
+
+    def test_get_multi_q2(self):
+        log = logging.getLogger()
+        index = IndexQ(test_config['indexqbase'], 'testq', size = 1, log = log)
+        q = index.get_multi_q()
+        docs = self.rand_docs.get_docs(50000)
+        for item in docs:
+            q.put(item)
+        q.put('STOP')
+        index.join_indexer()
+        self.assertEqual(docs, index.get_all_json_from_indexq())
+
+    def test_get_multi_q3(self):
+        log = logging.getLogger()
+        index = IndexQ(test_config['indexqbase'], 'testq', size = 1, log = log)
+        q = index.get_multi_q()
+        docs = self.rand_docs.get_docs(5000)
+        docs2 = self.rand_docs.get_docs(5000)
+        for item in docs + ['STOP'] + docs2:
+            q.put(item)
+        index.join_indexer()
+        self.assertEqual(docs+docs2, index.get_all_json_from_indexq())
+
+    def test_get_multi_with_sentinel(self):
+        log = logging.getLogger()
+        index = IndexQ(test_config['indexqbase'], 'testq', size = 1, log = log)
+        q = index.get_multi_q(sentinel='BLAH')
+        docs = self.rand_docs.get_docs(5000)
+        docs2 = self.rand_docs.get_docs(5000)
+        for item in docs + ['BLAH'] + docs2:
+            q.put(item)
+        index.join_indexer()
+        self.assertEqual(docs+docs2, index.get_all_json_from_indexq())

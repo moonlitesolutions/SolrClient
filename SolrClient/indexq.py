@@ -7,7 +7,9 @@ import shutil
 import random
 import json
 import threading
+import time
 from multiprocessing.pool import ThreadPool
+from multiprocessing import Process, JoinableQueue
 from functools import partial
 from SolrClient.exceptions import *
 
@@ -302,3 +304,65 @@ class IndexQ():
             f.close()
             out.extend(f_data)
         return out
+
+    def get_multi_q(self, sentinel='STOP'):
+        '''
+        This helps indexq operate in multiprocessing environment without each process having to have it's own IndexQ. It also is a handy way to deal with thread / process safety. 
+
+        This method will create and return a JoinableQueue object. Additionally, it will kick off a back end process that will monitor the queue, de-queue items and add them to this indexq. 
+
+        The returned JoinableQueue object can be safely passed to multiple worker processes to populate it with data. 
+
+        To indicate that you are done writing the data to the queue, pass in the sentinel value ('STOP' by default).
+
+        Make sure you call join_indexer() after you are done to close out the queue and join the worker. 
+        '''
+        self.in_q = JoinableQueue()
+        self.indexer_process = Process(target=self._indexer_process, args=(self.in_q, sentinel))
+        self.indexer_process.daemon = False
+        self.indexer_process.start()
+        return self.in_q
+
+    def join_indexer(self):
+        self.logger.info("Joining Queue")
+        self.in_q.join()
+        self.logger.info("Joining Index Process")
+        self.indexer_process.join()
+
+    def _indexer_process(self, in_q, sentinel):
+        self.logger.info("Indexing Process Started")
+        count = 0
+        total = 0
+        stime = time.time()
+        seen_STOP = False
+        while True:
+            if seen_STOP and in_q.qsize() == 0:
+                #If sentinel has been seen and the queue size is zero, write out the queue and return. 
+                self.logger.info("Indexer Queue is empty. Stopping....")
+                self.add(finalize=True)
+                return
+
+            if in_q.qsize() < 1 and not seen_STOP:
+                #If there is nothing to do, just hang out for a few seconds
+                time.sleep(3)
+                continue
+
+            item = in_q.get()
+            if item == sentinel:
+                self.logger.info("Indexer Received Stop Command, stopping indexer. Queue size is {}".format(str(in_q.qsize())))
+                seen_STOP = True
+                in_q.task_done()
+                continue
+
+            count += 1
+            total += 1
+
+            self.add(item)
+            in_q.task_done()
+
+            if (time.time() - stime) > 60:
+                self.logger.debug("Indexed {} items in the last 60 seconds. Total: ".format(count, total))
+                count = 0
+                stime = time.time()
+
+
