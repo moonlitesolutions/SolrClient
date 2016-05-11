@@ -101,7 +101,7 @@ class Collections():
                 yield collection, shard, cluster_resp[collection][shard]
 
         
-    def check_status(self, status=None):
+    def check_status(self, ignore=[], status=None):
         '''
         Checks status of each collection and shard to make sure that:
           a) Cluster state is active
@@ -123,6 +123,8 @@ class Collections():
                 self.logger.debug("Checking {}/{}".format(collection, shard))
                 s_dict = status[collection][shard]
                 for check in self.SHARD_CHECKS:
+                    if check['check_msg'] in ignore:
+                        continue
                     res = check['f'](s_dict)
                     if not res:
                         out[collection]['coll_status'] = False
