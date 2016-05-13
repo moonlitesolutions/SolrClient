@@ -2,13 +2,12 @@ import logging
 from ..exceptions import *
 
 
-    
 class TransportBase:
     """
     Base Transport Class
     """
     def __init__(self, solr, host=None, auth=[None,None], devel=None):
-        
+
         #self.solr = solr
         #self.devel = True if self.solr.devel else False
         self.logger=logging.getLogger(str(__package__))
@@ -19,14 +18,14 @@ class TransportBase:
         self._action_log = []
         self._action_log_count = 1000
         self.setup()
-            
-        
+
+
     def _proc_host(self,host):
         if type(host) is str:
             return [host]
         elif type(host) is list:
             return host
-    
+
     def _add_to_action(self, action):
         self._action_log.append(action)
         if len(self._action_log) >= self._action_log_count:
@@ -34,12 +33,12 @@ class TransportBase:
 
     def _retry(function):
         '''
-        Internal mechanism to try to send data to multiple Solr Hosts if the query fails on the first one. 
+        Internal mechanism to try to send data to multiple Solr Hosts if the query fails on the first one.
         '''
-        def inner(self,**kwargs):
+        def inner(self, **kwargs):
             for host in self.HOST_CONNECTIONS:
                 try:
-                    return function(self,host,**kwargs)
+                    return function(self, host, **kwargs)
                 except SolrError as e:
                     self.logger.exception(e)
                     raise
@@ -49,7 +48,7 @@ class TransportBase:
                     if '401' in e.__str__():
                         raise
         return inner
-        
+
     @_retry
     def send_request(self, host, **kwargs):
         if self._devel:
@@ -61,10 +60,7 @@ class TransportBase:
         elif 'error' in res_dict:
             raise SolrError(str(res_dict['error']))
         return [res_dict, c_inf]
-    
-    
+
+
     def _log_connection_error(self, method, full_url, body, duration, status_code=None, exception=None):
         self.logger.warning("Connection Error: [{}] {} - {} - {}".format(status_code, method, full_url, body))
-        
-        
-    
