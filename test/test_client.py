@@ -71,35 +71,36 @@ class ClientTestIndexing(unittest.TestCase):
 
     def test_indexing_json(self):
         self.docs = self.rand_docs.get_docs(53)
-        self.solr.index_json(test_config['SOLR_COLLECTION'],json.dumps(self.docs))
+        self.solr.index_json(test_config['SOLR_COLLECTION'],
+                             json.dumps(self.docs))
         self.commit()
         sleep(5)
         for doc in self.docs:
             logging.debug("Checking {}".format(doc['id']))
-            self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'],{'q':'id:{}'.format(doc['id'])}).get_num_found(),1)
+            self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(),1)
         self.delete_docs()
         self.commit()
 
     def test_indexing_conn_log(self):
         self.docs = self.rand_docs.get_docs(53)
-        self.solr.index_json(test_config['SOLR_COLLECTION'],json.dumps(self.docs))
+        self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps(self.docs))
         self.commit()
         sleep(5)
         for doc in self.docs:
             logging.debug("Checking {}".format(doc['id']))
-            self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'],{'q':'id:{}'.format(doc['id'])}).get_num_found(),1)
+            self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
         logging.info(self.solr.transport._action_log)
         self.delete_docs()
         self.commit()
 
     def test_index_json_file(self):
         self.docs = self.rand_docs.get_docs(55)
-        with open('temp_file.json','w') as f:
-            json.dump(self.docs,f)
-        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json')
+        with open('temp_file.json', 'w') as f:
+            json.dump(self.docs, f)
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'], 'temp_file.json')
         self.commit()
-        r = self.solr.query(test_config['SOLR_COLLECTION'],{'q':'*:*'})
-        self.assertEqual(r.get_num_found(),len(self.docs))
+        r = self.solr.query(test_config['SOLR_COLLECTION'], {'q': '*:*'})
+        self.assertEqual(r.get_num_found(), len(self.docs))
         self.delete_docs()
         self.commit()
         try:
@@ -111,12 +112,12 @@ class ClientTestIndexing(unittest.TestCase):
 
     def test_stream_file_gzip_file(self):
         self.docs = self.rand_docs.get_docs(60)
-        with gzip.open('temp_file.json.gz','wb') as f:
+        with gzip.open('temp_file.json.gz', 'wb') as f:
             f.write(json.dumps(self.docs).encode('utf-8'))
-        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'], 'temp_file.json.gz')
         self.commit()
-        r = self.solr.query(test_config['SOLR_COLLECTION'],{'q':'*:*'})
-        self.assertEqual(r.get_num_found(),len(self.docs))
+        r = self.solr.query(test_config['SOLR_COLLECTION'], {'q': '*:*'})
+        self.assertEqual(r.get_num_found(), len(self.docs))
         self.delete_docs()
         self.commit()
         try:
@@ -128,12 +129,12 @@ class ClientTestIndexing(unittest.TestCase):
     @unittest.skip("Don't test remote indexing in travis")
     def test_index_json_file(self):
         self.docs = self.rand_docs.get_docs(61)
-        with open('temp_file.json','w') as f:
-            json.dump(self.docs,f)
-        r = self.solr.local_index(test_config['SOLR_COLLECTION'],'temp_file.json')
+        with open('temp_file.json', 'w') as f:
+            json.dump(self.docs, f)
+        r = self.solr.local_index(test_config['SOLR_COLLECTION'], 'temp_file.json')
         self.commit()
-        r = self.solr.query(test_config['SOLR_COLLECTION'],{'q':'*:*'})
-        self.assertEqual(r.get_num_found(),len(self.docs))
+        r = self.solr.query(test_config['SOLR_COLLECTION'], {'q': '*:*'})
+        self.assertEqual(r.get_num_found(), len(self.docs))
         self.delete_docs()
         self.commit()
         try:
@@ -144,19 +145,22 @@ class ClientTestIndexing(unittest.TestCase):
 
     def test_paging_query_with_rows(self):
         self.docs = self.rand_docs.get_docs(1000)
-        with gzip.open('temp_file.json.gz','wb') as f:
+        with gzip.open('temp_file.json.gz', 'wb') as f:
             f.write(json.dumps(self.docs).encode('utf-8'))
-        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],
+                                  'temp_file.json.gz')
         self.commit()
         queries = 0
         docs = []
-        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'],{'q':'*:*'}, rows=50):
+        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'],
+                                          {'q': '*:*'},
+                                          rows=50):
             self.assertTrue(len(res.docs) == 50)
             docs.extend(res.docs)
-            queries +=1
+            queries += 1
         self.assertEqual(
-            [x['id'] for x in sorted(docs, key= lambda x: x['id'])],
-            [x['id'] for x in sorted(self.docs, key= lambda x: x['id'])]
+            [x['id'] for x in sorted(docs, key=lambda x: x['id'])],
+            [x['id'] for x in sorted(self.docs, key=lambda x: x['id'])]
             )
         self.assertTrue(1000/50 == queries)
         self.delete_docs()
@@ -169,20 +173,22 @@ class ClientTestIndexing(unittest.TestCase):
 
     def test_paging_query(self):
         self.docs = self.rand_docs.get_docs(1000)
-        with gzip.open('temp_file.json.gz','wb') as f:
+        with gzip.open('temp_file.json.gz', 'wb') as f:
             f.write(json.dumps(self.docs).encode('utf-8'))
-        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],
+                                  'temp_file.json.gz')
         self.commit()
         queries = 0
         docs = []
-        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'],{'q':'*:*'}):
+        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'],
+                                          {'q': '*:*'}):
             self.assertTrue(len(res.docs) == 1000)
             docs.extend(res.docs)
-            queries +=1
+            queries += 1
         self.assertTrue(queries == 1)
         self.assertEqual(
-            [x['id'] for x in sorted(docs, key= lambda x: x['id'])],
-            [x['id'] for x in sorted(self.docs, key= lambda x: x['id'])]
+            [x['id'] for x in sorted(docs, key=lambda x: x['id'])],
+            [x['id'] for x in sorted(self.docs, key=lambda x: x['id'])]
             )
         self.delete_docs()
         self.commit()
