@@ -253,16 +253,17 @@ class TestIndexQ(unittest.TestCase):
         index = IndexQ(test_config['indexqbase'], 'testq', size=size)
         buff = []
         docs = []
-        for dir in ['_todo_dir','_done_dir']:
+        for dir in ['_todo_dir', '_done_dir']:
             [os.remove(x) for x in index.get_all_as_list(dir=dir)]
         for _ in range(files):
-            doc = index.add(rdocs,finalize=True)
+            doc = index.add(rdocs, finalize=True)
             docs.append(doc)
+            sleep(.01)
         index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = []
         for x in index.get_todo_items():
             indexdocs.append(x)
-        self.assertEqual(docs,indexdocs)
+        self.assertEqual(docs, indexdocs)
         [os.remove(doc) for doc in docs]
 
 
@@ -474,7 +475,7 @@ class TestIndexQ(unittest.TestCase):
 
     def test_get_multi_with_sentinel(self):
         log = logging.getLogger()
-        index = IndexQ(test_config['indexqbase'], 'testq', size = 1, log = log)
+        index = IndexQ(test_config['indexqbase'], 'testq', size=1, log=log)
         q = index.get_multi_q(sentinel='BLAH')
         docs = self.rand_docs.get_docs(5000)
         docs2 = self.rand_docs.get_docs(5000)
@@ -482,3 +483,7 @@ class TestIndexQ(unittest.TestCase):
             q.put(item)
         index.join_indexer()
         self.assertEqual(docs+docs2, index.get_all_json_from_indexq())
+
+
+if __name__ == '__main__':
+    pass

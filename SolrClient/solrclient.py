@@ -19,11 +19,14 @@ class SolrClient:
     :param transport: Transport class to use. So far only requests is supported.
     :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level.
     '''
-    def __init__(self, host='http://localhost:8983/solr', transport=TransportRequests, devel=False, auth=None, log=None):
-
+    def __init__(self,
+                 host='http://localhost:8983/solr',
+                 transport=TransportRequests,
+                 devel=False,
+                 auth=None,
+                 log=None):
         self.devel = devel
         self.host = host
-
         self.transport = transport(self, host=host, auth=auth, devel=devel)
         self.logger = log if log else logging.getLogger(__package__)
         self.schema = Schema(self)
@@ -128,11 +131,15 @@ class SolrClient:
         '''
         if ' ' in doc_id:
             doc_id = '"{}"'.format(doc_id)
-        temp = {"delete": {"query":'id:{}'.format(doc_id)}}
-        resp, con_inf = self.transport.send_request(method='POST', endpoint='update', collection=collection, data=json.dumps(temp), *kwargs)
+        temp = {"delete": {"query": 'id:{}'.format(doc_id)}}
+        resp, con_inf = self.transport.send_request(method='POST',
+                                                    endpoint='update',
+                                                    collection=collection,
+                                                    data=json.dumps(temp),
+                                                    *kwargs)
         return resp
 
-    def stream_file(self,collection,filename,**kwargs):
+    def stream_file(self, collection, filename, **kwargs):
         '''
 
         :param str collection: The name of the collection for the request
