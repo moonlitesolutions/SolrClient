@@ -133,8 +133,8 @@ class TestIndexQ(unittest.TestCase):
             [buff.append(x) for x in self.docs]
             if type(doc) is str:
                 break
-        self.check_file_contents(doc,buff)
-        self.assertLessEqual(os.path.getsize(doc),size*1000000)
+        self.check_file_contents(doc, buff)
+        self.assertLessEqual(os.path.getsize(doc), size*1000000)
         self.assertGreaterEqual(os.path.getsize(doc), size*1000000*.90)
         os.remove(doc)
 
@@ -315,7 +315,7 @@ class TestIndexQ(unittest.TestCase):
     def test_index(self):
         index = IndexQ(test_config['indexqbase'], 'testq')
         solr = SolrClient(test_config['SOLR_SERVER'], devel=True, auth=test_config['SOLR_CREDENTIALS'])
-        solr.delete_doc_by_id(test_config['SOLR_COLLECTION'],'*')
+        solr.delete_doc_by_id(test_config['SOLR_COLLECTION'], '*')
         buff = []
         files = []
         for doc in self.docs:
@@ -330,37 +330,45 @@ class TestIndexQ(unittest.TestCase):
 
     def test_index_multiproc(self):
         index = IndexQ(test_config['indexqbase'], 'testq')
-        solr = SolrClient(test_config['SOLR_SERVER'], devel=True, auth=test_config['SOLR_CREDENTIALS'])
-        solr.delete_doc_by_id(test_config['SOLR_COLLECTION'],'*')
+        solr = SolrClient(test_config['SOLR_SERVER'],
+                          devel=True,
+                          auth=test_config['SOLR_CREDENTIALS'])
+        solr.delete_doc_by_id(test_config['SOLR_COLLECTION'], '*')
         buff = []
         files = []
         for doc in self.docs:
             files.append(index.add(doc, finalize=True))
-        index.index(solr,test_config['SOLR_COLLECTION'],threads=10)
-        solr.commit(test_config['SOLR_COLLECTION'],openSearcher=True)
+        index.index(solr, test_config['SOLR_COLLECTION'], threads=10)
+        solr.commit(test_config['SOLR_COLLECTION'], openSearcher=True)
         for doc in self.docs:
-            res = solr.query(test_config['SOLR_COLLECTION'],{'q':'id:{}'.format(doc['id'])})
-            self.assertTrue(res.get_results_count()==1)
+            res = solr.query(test_config['SOLR_COLLECTION'],
+                             {'q': 'id:{}'.format(doc['id'])})
+            self.assertTrue(res.get_results_count() == 1)
 
     def test_index_bad_send_method(self):
         index = IndexQ(test_config['indexqbase'], 'testq')
-        solr = SolrClient(test_config['SOLR_SERVER'], devel=True, auth=test_config['SOLR_CREDENTIALS'])
+        solr = SolrClient(test_config['SOLR_SERVER'],
+                          devel=True, auth=test_config['SOLR_CREDENTIALS'])
         with self.assertRaises(AttributeError):
-            index.index(solr,test_config['SOLR_COLLECTION'],send_method='Doesnt exist')
+            index.index(solr,
+                        test_config['SOLR_COLLECTION'],
+                        send_method='Doesnt exist')
 
 
     def test_index_bad_data(self):
         index = IndexQ(test_config['indexqbase'], 'testq')
-        solr = SolrClient(test_config['SOLR_SERVER'], devel=True, auth=test_config['SOLR_CREDENTIALS'])
+        solr = SolrClient(test_config['SOLR_SERVER'],
+                          devel=True,
+                          auth=test_config['SOLR_CREDENTIALS'])
         if index._is_locked():
             index._unlock()
-        self.assertEqual(index.get_all_as_list(),[])
-        solr.delete_doc_by_id(test_config['SOLR_COLLECTION'],'*')
-        todo_file = index.add({'date':'asd'}, finalize=True)
-        self.assertEqual(index.get_all_as_list()[0],todo_file)
+        self.assertEqual(index.get_all_as_list(), [])
+        solr.delete_doc_by_id(test_config['SOLR_COLLECTION'], '*')
+        todo_file = index.add({'date': 'asd'}, finalize=True)
+        self.assertEqual(index.get_all_as_list()[0], todo_file)
         with self.assertRaises(SolrError):
-            index.index(solr,test_config['SOLR_COLLECTION'])
-        self.assertEqual(index.get_all_as_list()[0],todo_file)
+            index.index(solr, test_config['SOLR_COLLECTION'])
+        self.assertEqual(index.get_all_as_list()[0], todo_file)
         self.assertFalse(index._is_locked())
 
     def test_thread_pool_low(self):
@@ -395,8 +403,11 @@ class TestIndexQ(unittest.TestCase):
         Verity that each thread
         '''
         docs = self.rand_docs.get_docs(25000)
-        index = IndexQ(test_config['indexqbase'],'testq', size = .1, devel=True)
-        for dir in ['_todo_dir','_done_dir']:
+        index = IndexQ(test_config['indexqbase'],
+                       'testq',
+                       size=.1,
+                       devel=True)
+        for dir in ['_todo_dir', '_done_dir']:
             [os.remove(x) for x in index.get_all_as_list(dir=dir)]
         threads = 25
 
@@ -405,7 +416,8 @@ class TestIndexQ(unittest.TestCase):
         index.add(finalize=True)
         d = index.get_all_json_from_indexq()
         self.assertEqual(len(d), len(docs))
-        self.assertEqual(sorted(d, key=lambda x: x['id']), sorted(docs, key=lambda x: x['id']))
+        self.assertEqual(sorted(d, key=lambda x: x['id']),
+                         sorted(docs, key=lambda x: x['id']))
 
     def test_add_callback_no_size(self):
         docs = self.rand_docs.get_docs(5)

@@ -91,7 +91,7 @@ class SolrClient:
 
 
 
-    def index_json(self,collection,data,params={},**kwargs):
+    def index_json(self, collection, data, params={}, **kwargs):
         '''
         :param str collection: The name of the collection for the request.
         :param data str data: Valid Solr JSON as a string. ex: '[{"title": "testing solr indexing", "id": "test1"}]'
@@ -104,7 +104,12 @@ class SolrClient:
 
         '''
 
-        resp, con_inf = self.transport.send_request(method='POST',endpoint='update',collection=collection, data=data,params=params,*kwargs)
+        resp, con_inf = self.transport.send_request(method='POST',
+                                                    endpoint='update',
+                                                    collection=collection,
+                                                    data=data,
+                                                    params=params,
+                                                    *kwargs)
 
         if resp['responseHeader']['status'] == 0:
             return True
