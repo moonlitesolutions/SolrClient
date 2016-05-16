@@ -4,50 +4,50 @@ from .transport import TransportRequests
 from .schema import Schema
 from .exceptions import *
 from .solrresp import SolrResponse
-from collections import defaultdict
+
 
 class Collections():
     '''
     Provides an interface to Solr Collections API.
     '''
-    
+
     def __init__(self, solr, log):
-        
+
         self.solr = solr
         self.logger = log
         self.solr_clients = {}
-        
+
     def api(self, action, args={}):
         '''
-        Sends a request to Solr Collections API. 
+        Sends a request to Solr Collections API.
         Documentation is here: https://cwiki.apache.org/confluence/display/solr/Collections+API
-        
+
         :param string action: Name of the collection for the action
         :param dict args: Dictionary of specific parameters for action
         '''
         args['action'] = action.upper()
-        
+
         try:
             res, con_info = self.solr.transport.send_request(endpoint='admin/collections', params=args)
         except Exception as e:
             self.logger.error("Error querying SolrCloud Collections API. ")
             self.logger.exception(e)
             raise
-            
+
         if 'responseHeader' in res and res['responseHeader']['status'] == 0:
             return res, con_info
         else:
             raise SolrError("Error Issuing Collections API Call for: {} +".format(con_info, res))
-    
+
     def clusterstatus(self):
         '''
         Returns a slightly slimmed down version of the clusterstatus api command. It also gets count of documents in each shard on each replica and returns
-        it as doc_count key for each replica. 
+        it as doc_count key for each replica.
 
         '''
 
         res, con_info =  self.api('clusterstatus')
-        
+
         cluster = res['cluster']['collections']
         out = {}
         try:
@@ -64,18 +64,18 @@ class Collections():
         except Exception as e:
             self.logger.error("Couldn't parse response from clusterstatus API call")
             self.logger.exception(e)
-        
+
         return out
-    
+
     def _get_collection_counts(self, core_data):
         '''
-        Queries each core to get individual counts for each core for each shard. 
+        Queries each core to get individual counts for each core for each shard.
         '''
         if core_data['base_url'] not in self.solr_clients:
             from SolrClient import SolrClient
             self.solr_clients['base_url'] =  SolrClient(core_data['base_url'], log = self.logger)
         try:
-            return self.solr_clients['base_url'].query(core_data['core'], 
+            return self.solr_clients['base_url'].query(core_data['core'],
                                                         {'q':'*:*',
                                                         'rows':0,
                                                         'distrib': 'false',
@@ -84,7 +84,7 @@ class Collections():
             self.logger.error("Couldn't get Counts for {}/{}".format(core_data['base_url'], core_data['core']))
             self.logger.exception(e)
             return False
-        
+
     def _for_core(self, cluster_resp=None):
         if cluster_resp is None:
             cluster_resp = self.clusterstatus()
@@ -100,13 +100,13 @@ class Collections():
             for shard in cluster_resp[collection]:
                 yield collection, shard, cluster_resp[collection][shard]
 
-        
+
     def check_status(self, ignore=[], status=None):
         '''
         Checks status of each collection and shard to make sure that:
           a) Cluster state is active
-          b) Number of docs matches across replicas for a given shard. 
-        Returns a dict of results for custom alerting. 
+          b) Number of docs matches across replicas for a given shard.
+        Returns a dict of results for custom alerting.
         '''
         self.SHARD_CHECKS = [
             {'check_msg': 'Bad Core Count Check', 'f': self._check_shard_count},
@@ -132,12 +132,12 @@ class Collections():
                             out[collection]['coll_messages'].append(check['check_msg'])
                         self.logger.debug(s_dict)
         return out
-                
+
     def _check_shard_count(self, cores_dict):
         if len(set([cores_dict[core]['doc_count'] for core in cores_dict])) > 1:
             return False
         return True
-        
+
     def _check_shard_status(self, cores_dict):
         for core in cores_dict:
             if cores_dict[core]['state'] != 'active':
