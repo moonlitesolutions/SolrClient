@@ -9,7 +9,7 @@ test_config = {
     'SOLR_CREDENTIALS': (os.environ.get('SOLR_TEST_USER'), os.environ.get('SOLR_TEST_PASS')),
     'collections':{
         'fields':[
-            {'name':'product_name','stored':True,'indexed':True,'type':'text_en'},
+            {'name': 'product_name', 'stored': True, 'indexed': True, 'type':'text_en'},
             {'name':'product_name_exact','stored':True,'indexed':True,'type':'string'},
             {'name':'date','stored':True,'indexed':True,'type':'tdate'},
             {'name':'price','stored':True,'indexed':True,'type':'int'},
@@ -20,3 +20,5 @@ test_config = {
         ]},
     'docs': [],
 }
+if __name__=='__main__':
+    pass

@@ -315,13 +315,15 @@ class TestIndexQ(unittest.TestCase):
 
     def test_index(self):
         index = IndexQ(test_config['indexqbase'], 'testq')
-        solr = SolrClient(test_config['SOLR_SERVER'], devel=True, auth=test_config['SOLR_CREDENTIALS'])
+        solr = SolrClient(test_config['SOLR_SERVER'],
+                          devel=True,
+                          auth=test_config['SOLR_CREDENTIALS'])
         solr.delete_doc_by_id(test_config['SOLR_COLLECTION'], '*')
         buff = []
         files = []
         for doc in self.docs:
             files.append(index.add(doc, finalize=True))
-        index.index(solr,test_config['SOLR_COLLECTION'])
+        index.index(solr, test_config['SOLR_COLLECTION'])
         solr.commit(test_config['SOLR_COLLECTION'],openSearcher=True)
         for doc in self.docs:
             res = solr.query(test_config['SOLR_COLLECTION'],{'q':'id:{}'.format(doc['id'])})
@@ -431,7 +433,7 @@ class TestIndexQ(unittest.TestCase):
 
     def test_add_callback_with_size(self):
         docs = self.rand_docs.get_docs(5)
-        index = IndexQ(test_config['indexqbase'], 'testq', size =1)
+        index = IndexQ(test_config['indexqbase'], 'testq', size=1)
         temp = []
         def cb(path):
             temp.append(path)
@@ -483,7 +485,3 @@ class TestIndexQ(unittest.TestCase):
             q.put(item)
         index.join_indexer()
         self.assertEqual(docs+docs2, index.get_all_json_from_indexq())
-
-
-if __name__ == '__main__':
-    pass

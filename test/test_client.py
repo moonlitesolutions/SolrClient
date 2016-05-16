@@ -11,10 +11,10 @@ from .RandomTestData import RandomTestData
 
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 
-
 class ClientTestIndexing(unittest.TestCase):
     @classmethod
     def setUpClass(self):
+
         self.solr = SolrClient(test_config['SOLR_SERVER'][0], devel=True,
                                auth=test_config['SOLR_CREDENTIALS'])
         self.rand_docs = RandomTestData()
