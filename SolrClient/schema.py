@@ -110,8 +110,8 @@ class Schema():
         #Fix this later to check for field before sending a delete
         if self.devel:
             self.logger.debug("Deleting {}".format(str(copy_dict)))
-        copyfields = self.get_schema_copyfields()
-        if copy_dict not in copy_fields:
+        copyfields = self.get_schema_copyfields(collection)
+        if copy_dict not in copyfields:
             self.logger.info("Fieldset not in Solr Copy Fields: {}".format(str(copy_dict)))
         temp = {"delete-copy-field": dict(copy_dict)}
         res, con_info = self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))

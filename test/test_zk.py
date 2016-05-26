@@ -12,7 +12,7 @@ from .test_config import test_config
 from .RandomTestData import RandomTestData
 
 
-logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+#logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 
 class ZKTest(unittest.TestCase):
     #High level zk tests
