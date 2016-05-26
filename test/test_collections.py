@@ -31,7 +31,8 @@ class test_collections(unittest.TestCase):
         res, con_info = self.solr.collections.api('create', {
                                 'name': temp,
                                 'numShards': 1,
-                                'replicationFactor': 1
+                                'replicationFactor': 1,
+                                'collection.configName': 'basic_configs'
                                 })
         self.assertTrue('success' in res)
         with self.assertRaises(SolrError):
@@ -40,7 +41,8 @@ class test_collections(unittest.TestCase):
             res, con_info = self.solr.collections.api('create', {
                                 'name': temp,
                                 'numShards': 1,
-                                'replicationFactor': 1
+                                'replicationFactor': 1,
+                                'collection.configName': 'basic_configs'
                                 })
 
         # Clean up and delete the collection
