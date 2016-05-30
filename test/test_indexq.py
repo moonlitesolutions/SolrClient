@@ -10,6 +10,7 @@ from SolrClient import SolrClient, IndexQ
 from SolrClient.exceptions import *
 from .test_config import test_config
 from .RandomTestData import RandomTestData
+import shutil
 
 test_config['indexqbase'] = os.getcwd()
 
@@ -23,6 +24,17 @@ class TestIndexQ(unittest.TestCase):
         self.devel = False
         if self.devel:
             logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+        try:
+            shutil.rmtree(test_config['indexqbase'] + os.sep + 'testq')
+        except:
+            pass
+
+    @classmethod
+    def tearDownClass(self):
+        try:
+            shutil.rmtree(test_config['indexqbase'] + os.sep + 'testq')
+        except:
+            pass
 
     def setUp(self):
         index = IndexQ(test_config['indexqbase'], 'testq')
