@@ -250,12 +250,13 @@ class TestIndexQ(unittest.TestCase):
         docs = []
         for _ in range(files):
             doc = index.add(self.docs,finalize=True)
+            sleep(1)
             docs.append(doc)
         index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = []
         for x in index.get_todo_items():
             indexdocs.append(x)
-        self.assertEqual(docs,indexdocs)
+        self.assertEqual(docs, indexdocs)
         [os.remove(doc) for doc in docs]
 
     def test_dequeue_100(self):

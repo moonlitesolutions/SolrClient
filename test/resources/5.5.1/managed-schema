@@ -3,14 +3,14 @@
    <field name="_version_" type="long" indexed="true" stored="true"/>
 
    <field name="_root_" type="string" indexed="true" stored="false"/>
-   <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" /> 
-   <field name="test1" type="string" indexed="true" stored="true"  multiValued="false" /> 
+   <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+   <field name="test1" type="string" indexed="true" stored="true"  multiValued="false" />
    <field name="test1_exact" type="string" indexed="true" stored="true"  multiValued="false" />
-   <field name="product_name" type="string" indexed="true" stored="true"  multiValued="false" /> 
-   <field name="product_name_exact" type="string" indexed="true" stored="true"  multiValued="false" /> 
-   <field name="facet_test" type="string" indexed="true" stored="true"  multiValued="false" /> 
-   <field name="price" type="int" indexed="true" stored="true"  multiValued="false" />    
-   <field name="index_date" type="date" default="NOW" indexed="true" stored="true"  multiValued="false" /> 
+   <field name="product_name" type="string" indexed="true" stored="true"  multiValued="false" />
+   <field name="product_name_exact" type="string" indexed="true" stored="true"  multiValued="false" />
+   <field name="facet_test" type="string" indexed="true" stored="true"  multiValued="false" />
+   <field name="price" type="int" indexed="true" stored="true"  multiValued="false" />
+   <field name="index_date" type="date" default="NOW" indexed="true" stored="true"  multiValued="false" />
    <field name="date" type="date" indexed="true" stored="true"  multiValued="false" />   
 
    <dynamicField name="*_i"  type="int"    indexed="true"  stored="true"/>
@@ -239,13 +239,13 @@
         <filter class="solr.TrimFilterFactory" />
         <!-- The PatternReplaceFilter gives you the flexibility to use
              Java Regular expression to replace any sequence of characters
-             matching a pattern with an arbitrary replacement string, 
+             matching a pattern with an arbitrary replacement string,
              which may include back references to portions of the original
              string matched by the pattern.
-             
+
              See the Java Regular Expression documentation for more
              information on pattern and replacement string syntax.
-             
+
              http://docs.oracle.com/javase/7/docs/api/java/util/regex/package-summary.html
           -->
         <filter class="solr.PatternReplaceFilterFactory"
@@ -263,12 +263,12 @@
     </fieldType>
 
     <!-- since fields of this type are by default not stored or indexed,
-         any data added to them will be ignored outright.  --> 
+         any data added to them will be ignored outright.  -->
     <fieldType name="ignored" stored="false" indexed="false" multiValued="true" class="solr.StrField" />
 
     <!-- This point type indexes the coordinates as separate fields (subFields)
       If subFieldType is defined, it references a type, and a dynamic field
-      definition is created matching *___<typename>.  Alternately, if 
+      definition is created matching *___<typename>.  Alternately, if
       subFieldSuffix is defined, that is used to create the subFields.
       Example: if subFieldType="double", then the coordinates would be
         indexed in fields myloc_0___double,myloc_1___double.
