@@ -51,6 +51,21 @@ class Schema():
         res, con_info =self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
         return res
 
+    def replace_field(self, collection, field_dict):
+        '''
+        Replace a field in managed schema, will raise ValueError if the field does not exist. field_dict as in create_field(...).
+
+        :param string collection:
+        :param dict field_dict:
+        '''
+
+        if not self.does_field_exist(collection, field_dict['name']):
+            raise ValueError("Field {} does not exists in Solr Collection {}".format(field_dict['name'], collection))
+        temp = {"replace-field": dict(field_dict)}
+        res, con_info = self.solr.transport.send_request(method='POST', endpoint=self.schema_endpoint,
+                                                         collection=collection, data=json.dumps(temp))
+        return res
+    
 
     def delete_field(self,collection,field_name):
         '''
