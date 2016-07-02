@@ -12,10 +12,10 @@ from .RandomTestData import RandomTestData
 
 test_config['indexqbase']=os.getcwd()
 #logging.basicConfig(level=logging.INFO,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
-     
+
 class ReindexerTests(unittest.TestCase):
-    
-    #Methos to create the schema in the collections    
+
+    #Methos to create the schema in the collections
     def create_fields(self):
         for coll in self.colls:
             logging.debug("Creating fields for {}".format(coll))
@@ -25,7 +25,7 @@ class ReindexerTests(unittest.TestCase):
                 except ValueError:
                     #Filed already exists probably
                     pass
-    
+
     def create_copy_fields(self):
         for coll in self.colls:
             logging.debug("Creating copy fields for {}".format(coll))
@@ -44,7 +44,7 @@ class ReindexerTests(unittest.TestCase):
         '''
         Generates and indexes in random data while maintaining counts of items in various date ranges.
 
-        These counts in self.date_counts are used later to validate some reindexing methods. 
+        These counts in self.date_counts are used later to validate some reindexing methods.
 
         Brace yourself or have a drink.....
         '''
@@ -53,7 +53,7 @@ class ReindexerTests(unittest.TestCase):
         edate = datetime.datetime.now() + datetime.timedelta(days=30)
         self._start_date = sdate
         self._end_date = edate
-        
+
         import random
         #Assign random times to documents that are generated. This is used to spread out the documents over multiple time ranges
         hours = (edate-sdate).days * 24
@@ -101,10 +101,10 @@ class ReindexerTests(unittest.TestCase):
         self.solr = SolrClient(test_config['SOLR_SERVER'][0], devel=True, auth=test_config['SOLR_CREDENTIALS'])
         self.colls = [test_config['SOLR_REINDEXER_COLLECTION_S'], test_config['SOLR_REINDEXER_COLLECTION_D']]
         self.rand_docs = RandomTestData()
-    
+
     def test_solr_to_indexq(self):
         '''
-        Will export documents from Solr and put them into an IndexQ. 
+        Will export documents from Solr and put them into an IndexQ.
         '''
         index = IndexQ(test_config['indexqbase'], 'test_reindexer', size=0)
         for dir in ['_todo_dir','_done_dir']:
@@ -119,7 +119,7 @@ class ReindexerTests(unittest.TestCase):
 
     def test_ignore_fields(self):
         '''
-        Will export documents from Solr and put them into an IndexQ. 
+        Will export documents from Solr and put them into an IndexQ.
         '''
         index = IndexQ(test_config['indexqbase'], 'test_reindexer', size=0)
         for dir in ['_todo_dir','_done_dir']:
@@ -143,11 +143,11 @@ class ReindexerTests(unittest.TestCase):
         index = IndexQ(test_config['indexqbase'], 'test_reindexer', size=0)
         reindexer = Reindexer(source=self.solr, source_coll='source_coll', dest=index, ignore_fields=['_text_','_any_other_field'])
         self.assertEqual(reindexer._ignore_fields, ['_text_','_any_other_field'])
-               
+
 
     def test_get_copy_fields(self):
         '''
-        Tests the method to get copy fields from Solr. 
+        Tests the method to get copy fields from Solr.
         '''
         reindexer = Reindexer(source=self.solr, source_coll=self.colls[0], dest=self.solr, dest_coll='doesntmatter')
         self.assertEqual(reindexer._get_copy_fields(),
@@ -155,25 +155,25 @@ class ReindexerTests(unittest.TestCase):
 
     def test_query_gen(self):
         '''
-        Tests the method to get copy fields from Solr. 
+        Tests the method to get copy fields from Solr.
         '''
         reindexer = Reindexer(source=self.solr, source_coll=self.colls[0], dest=self.solr, dest_coll='doesntmatter')
         self.assertEqual(reindexer._get_query('cursor'),
                         {'cursorMark': 'cursor', 'rows': reindexer._rows, 'q': '*:*', 'sort': 'id desc'})
 
 
-    def test_query_gen_pershard(self):
+    def test_query_gen_pershard_distrib(self):
         '''
-        Tests the method to get copy fields from Solr. 
+        Tests the method to get copy fields from Solr.
         '''
         reindexer = Reindexer(source=self.solr, source_coll=self.colls[0], dest=self.solr, dest_coll='doesntmatter', per_shard=True)
-        self.assertEqual(reindexer._get_query('cursor'),
-                        {'cursorMark': 'cursor', 'rows': reindexer._rows, 'q': '*:*', 'sort': 'id desc','distrib':'false'})
+        q = reindexer._get_query('cursor')
+        self.assertTrue('distrib' in q and q['distrib'] =='false')
 
 
     def test_query_gen_date(self):
         '''
-        Tests the method to get copy fields from Solr. 
+        Tests the method to get copy fields from Solr.
         '''
         reindexer = Reindexer(source=self.solr, source_coll=self.colls[0], dest=self.solr, dest_coll='doesntmatter', date_field='ddddd')
         self.assertEqual(reindexer._get_query('cursor'),
@@ -200,10 +200,10 @@ class ReindexerTests(unittest.TestCase):
         self._index_docs(50000,self.colls[0])
         reindexer = Reindexer(source=self.solr, source_coll='source_coll', dest=self.solr, dest_coll='dest_coll')
         reindexer.reindex()
-        self.assertEquals(
+        self.assertEqual(
             self.solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs.sort(key=lambda x: x['id']),
             self.solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs.sort(key=lambda x: x['id']),
-            )    
+            )
 
 
     def test_solr_to_solr_with_date(self):
@@ -224,16 +224,16 @@ class ReindexerTests(unittest.TestCase):
 
     def test_get_edge_date(self):
         '''
-        Checks to make sure _get_edge_date returns correct start and end dates. 
-        ''' 
+        Checks to make sure _get_edge_date returns correct start and end dates.
+        '''
         self._index_docs(50000,self.colls[0])
         solr = SolrClient(test_config['SOLR_SERVER'][0], devel=True, auth=test_config['SOLR_CREDENTIALS'])
         reindexer = Reindexer(source=solr, source_coll='source_coll', dest=solr, dest_coll='dest_coll', date_field='index_date')
         solr_end_date_string = reindexer._get_edge_date('date', 'desc')
         solr_start_date_string = reindexer._get_edge_date('date', 'asc')
-        self.assertTrue(self._start_date.date(), 
+        self.assertTrue(self._start_date.date(),
                         datetime.datetime.strptime(solr_start_date_string,'%Y-%m-%dT%H:%M:%S.%fZ'))
-        self.assertTrue(self._end_date.date(), 
+        self.assertTrue(self._end_date.date(),
                         datetime.datetime.strptime(solr_end_date_string,'%Y-%m-%dT%H:%M:%S.%fZ'))
 
 
@@ -245,28 +245,28 @@ class ReindexerTests(unittest.TestCase):
         reindexer = Reindexer(source=solr, source_coll='source_coll', dest=solr, dest_coll='dest_coll', date_field='index_date')
         self.assertEqual(
             reindexer._get_date_range_query('2015-11-10', '2015-12-11'),
-            {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'index_date', 
+            {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'index_date',
             'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.include': 'all', 'facet.range.gap': '+1DAY'}
             )
         self.assertEqual(
             reindexer._get_date_range_query('2015-11-10', '2015-12-11', date_field = 'date123'),
-            {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'date123', 
+            {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'date123',
             'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.include': 'all', 'facet.range.gap': '+1DAY'}
             )
         self.assertEqual(
             reindexer._get_date_range_query('2015-11-10', '2015-12-11', date_field = 'date123', timespan='MONTH'),
-            {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'date123', 
+            {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'date123',
             'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.include': 'all', 'facet.range.gap': '+1MONTH'}
             )
         self.assertEqual(
             reindexer._get_date_range_query('2015-11-10', '2015-12-11', timespan='MONTH'),
-            {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'index_date', 
+            {'rows': 0, 'facet.range.end': '2015-12-11', 'facet': 'true', 'facet.range': 'index_date',
             'facet.range.start': '2015-11-10', 'q': '*:*', 'facet.range.include': 'all', 'facet.range.gap': '+1MONTH'}
             )
 
     def test_get_date_facet_counts(self):
         '''
-        Checks the date_range_query generation function. Makes sure the date ranges returned matches what got indexed. 
+        Checks the date_range_query generation function. Makes sure the date ranges returned matches what got indexed.
         '''
         self._index_docs(50000,self.colls[0])
         solr = SolrClient(test_config['SOLR_SERVER'][0], devel=True, auth=test_config['SOLR_CREDENTIALS'])
@@ -294,7 +294,7 @@ class ReindexerTests(unittest.TestCase):
             if source_facet[dt_range] != self.date_counts[dt]:
                 logging.info("{} - {} - {}".format(dt, source_facet[dt_range], self.date_counts[dt]))
             self.assertEqual(source_facet[dt_range],self.date_counts[dt])
-    
+
     def test_get_date_facet_counts_not_day(self):
         '''
         Checks the date_range_query generation function. Since it's pretty simple, running all the tests as one
@@ -323,7 +323,7 @@ class ReindexerTests(unittest.TestCase):
         #Makes sure nothing got indexed
         self.assertEqual(len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),50000)
         self.assertEqual(len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs),0)
-    
+
     def test_solr_to_solr_resume_basic(self):
         '''
         Checks the date_range_query generation function. Since it's pretty simple, running all the tests as one
@@ -343,7 +343,7 @@ class ReindexerTests(unittest.TestCase):
 
     def test_solr_to_solr_reindex_and_resume(self):
         '''
-        Only reindexes half of the collection on the first time. Then goes back and does a resume to make sure it works. 
+        Only reindexes half of the collection on the first time. Then goes back and does a resume to make sure it works.
         '''
         self._index_docs(50000,self.colls[0])
         solr = SolrClient(test_config['SOLR_SERVER'][0], auth=test_config['SOLR_CREDENTIALS'])
@@ -351,14 +351,14 @@ class ReindexerTests(unittest.TestCase):
         #Make sure only source has datae
         self.assertEqual(len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),50000)
         self.assertEqual(len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs),0)
-        #This gets somehwat of a mid point date in the range. 
+        #This gets somehwat of a mid point date in the range.
         midpoint = (datetime.datetime.now() - datetime.timedelta(days=
                     ((self._end_date - self._start_date).days/2)
                     ))
         #Reindex approximately half of the data by restricting FQ
         reindexer.reindex(fq=['date:[* TO {}]'.format(midpoint.isoformat()+'Z')])
         sleep(10)
-        #Make sure we have at least 20% of the data. 
+        #Make sure we have at least 20% of the data.
         dest_count = len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs)
         s_count = len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs)
         self.assertTrue( s_count > dest_count > s_count *.20       )
@@ -371,7 +371,7 @@ class ReindexerTests(unittest.TestCase):
 
     def test_solr_to_solr_reindex_and_resume_reverse(self):
         '''
-        Only reindexes half of the collection on the first time. Then goes back and does a resume to make sure it works. 
+        Only reindexes half of the collection on the first time. Then goes back and does a resume to make sure it works.
         '''
         self._index_docs(50000,self.colls[0])
         solr = SolrClient(test_config['SOLR_SERVER'][0], auth=test_config['SOLR_CREDENTIALS'])
@@ -379,14 +379,14 @@ class ReindexerTests(unittest.TestCase):
         #Make sure only source has data
         self.assertEqual(len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),50000)
         self.assertEqual(len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs),0)
-        #This gets somehwat of a mid point date in the range. 
+        #This gets somehwat of a mid point date in the range.
         midpoint = (datetime.datetime.now() - datetime.timedelta(days=
                     ((self._end_date - self._start_date).days/2)
                     ))
         #Reindex approximately half of the data by restricting FQ
         reindexer.reindex(fq=['date:[{} TO *]'.format(midpoint.isoformat()+'Z')])
         sleep(10)
-        #Make sure we have at least 20% of the data. 
+        #Make sure we have at least 20% of the data.
         dest_count = len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs)
         s_count = len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs)
         self.assertTrue( s_count > dest_count > s_count *.20       )
@@ -400,11 +400,16 @@ class ReindexerTests(unittest.TestCase):
     def test_solr_to_solr_reindexer_per_shard(self):
         self._index_docs(50000,self.colls[0])
         solr = SolrClient(test_config['SOLR_SERVER'][0], auth=test_config['SOLR_CREDENTIALS'])
-        reindexer = Reindexer(source=solr, source_coll='source_coll', dest=solr, dest_coll='dest_coll', per_shard=True, date_field='date')
         #Make sure only source has data
         self.assertEqual(len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),50000)
         self.assertEqual(len(solr.query(self.colls[1],{'q':'*:*','rows':10000000}).docs),0)
+
+        reindexer = Reindexer(source=solr, source_coll='source_coll_shard1_replica1', dest=solr, dest_coll=self.colls[1], per_shard=True, date_field='date')
         reindexer.reindex()
+        reindexer = Reindexer(source=solr, source_coll='source_coll_shard2_replica1', dest=solr, dest_coll=self.colls[1], per_shard=True, date_field='date')
+        reindexer.reindex()
+
+        self.solr.commit(self.colls[1], openSearcher=True)
         #sloppy check over here, will improve later
         self.assertEqual(
             len(solr.query(self.colls[0],{'q':'*:*','rows':10000000}).docs),
