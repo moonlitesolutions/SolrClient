@@ -5,7 +5,7 @@ import os
 from pprint import pprint
 import argparse
 PYS = ['3.3', '3.3', '3.4']
-SOLRS = ['5.2.1', '5.5.2', '6.1.0']
+SOLRS = ['5.2.1', '5.5.3', '6.1.0', '6.2.1']
 TESTS = ['test_client', 'test_indexq', 'test_reindexer', 'test_resp',
          'test_collections', 'test_zk']
 
