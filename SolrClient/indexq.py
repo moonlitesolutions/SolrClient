@@ -238,8 +238,6 @@ class IndexQ():
         '''
         Marks the item as complete by moving it to the done directory and optionally gzipping it.
         '''
-
-        #TODO: Implement compress option to also gzip these completed items
         if not os.path.exists(filepath):
             raise FileNotFoundError("Can't Complete {}, it doesn't exist".format(filepath))
         if self._devel: self.logger.debug("Completing - {} ".format(filepath))
@@ -250,11 +248,15 @@ class IndexQ():
                 self.logger.error("rotate_complete function failed with the following exception.")
                 self.logger.exception(e)
                 raise
-            newpath = os.path.join(self._done_dir, complete_dir, os.path.split(filepath)[-1] )
-            if not os.path.isdir(newpath):
-                os.makedirs(newpath)
+            newdir = os.path.join(self._done_dir, complete_dir)
+            newpath = os.path.join(newdir, os.path.split(filepath)[-1] )
+
+            if not os.path.isdir(newdir):
+                self.logger.debug("Making new directory: {}".format(newdir))
+                os.makedirs(newdir)
         else:
             newpath = os.path.join(self._done_dir, os.path.split(filepath)[-1] )
+
         try:
             if self._compress_complete:
                 if not filepath.endswith('.gz'):
@@ -263,12 +265,9 @@ class IndexQ():
                     newpath += '.gz'
                     self._compress_and_move(filepath, newpath)
                     return newpath
-            if filepath.endswith('.gz') and self._compress_complete == True:
-                raise RuntimeError("You don't need to enable compression of \
-                                    complete files if the incoming todo files \
-                                    are already compressed. ")
+                # else the file is already compressed and can just be moved
+            #if not compressing completed file, just move it
             shutil.move(filepath, newpath)
-
             self.logger.info(" Completed - {}".format(filepath))
         except Exception as e:
             self.logger.error("Couldn't Complete {}".format(filepath))
@@ -279,6 +278,7 @@ class IndexQ():
 
     def _compress_and_move(self, source, destination):
         try:
+            self.logger.debug("Compressing and Moving Completed file: {} -> {}".format(source, destination))
             with gzip.open(destination, 'wb') as df, open(source, 'rb') as sf:
                     df.writelines(sf)
             os.remove(source)
