@@ -42,7 +42,7 @@ class SolrClient:
         :param bool openSearcher: If new searcher is to be opened
         :param bool softCommit: SoftCommit
         :param bool waitServer: Blocks until the new searcher is opened
-        :param book commit: Commit
+        :param bool commit: Commit
 
         Sends a commit to a Solr collection.
 
@@ -132,6 +132,24 @@ class SolrClient:
         if ' ' in doc_id:
             doc_id = '"{}"'.format(doc_id)
         temp = {"delete": {"query": 'id:{}'.format(doc_id)}}
+        resp, con_inf = self.transport.send_request(method='POST',
+                                                    endpoint='update',
+                                                    collection=collection,
+                                                    data=json.dumps(temp),
+                                                    *kwargs)
+        return resp
+
+    def delete_doc_by_query(self, collection, query, **kwargs):
+        '''
+        :param str collection: The name of the collection for the request
+        :param str query: Query selecting documents to be deleted.
+
+        Deletes items from Solr based on a given query. ::
+
+            >>> solr.delete_doc_by_query('SolrClient_unittest','*:*')
+
+        '''
+        temp = {"delete": {"query": query}}
         resp, con_inf = self.transport.send_request(method='POST',
                                                     endpoint='update',
                                                     collection=collection,
