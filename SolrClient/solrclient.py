@@ -85,7 +85,28 @@ class SolrClient:
                 elif type(query[field]) is list:
                     query[field] = [s.replace(' ','') for s in query[field]]
 
-        resp, con_inf = self.transport.send_request(method='GET',endpoint=request_handler,collection=collection, params=query,*kwargs)
+        # If the query is long, use POST instead of GET. Estimate query string
+        # length by converting the query dict to a string since at this point
+        # we don't have a urlencoded query yet.
+        if len(str(query)) > 1000:
+            method = 'POST'
+            headers = {'content-type': 'application/x-www-form-urlencoded'}
+            params = {}
+            data = query
+        else:
+            method = 'GET'
+            headers = None
+            params = query
+            data = {}
+
+        resp, con_inf = self.transport.send_request(method=method,
+                                                    endpoint=request_handler,
+                                                    collection=collection,
+                                                    params=params,
+                                                    data=data,
+                                                    headers=headers,
+                                                    *kwargs)
+
         if resp:
             resp = SolrResponse(resp)
             resp.url = con_inf['url']
