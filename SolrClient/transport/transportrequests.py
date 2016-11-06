@@ -41,12 +41,14 @@ class TransportRequests(TransportBase):
         else:
             raise ValueError("No URL 'endpoint' set in parameters to send_request")
 
+        headers = kwargs.get('headers') or {'content-type': 'application/json'}
+
         self.logger.debug("Sending Request to {} with {}".format(url,", ".join([str("{}={}".format(key, params[key])) for key in params])))
 
         #Some code used from ES python client.
         start = time.time()
         try:
-            res = self.session.request(method, url, params=params, data=data,headers = {'content-type': 'application/json'})
+            res = self.session.request(method, url, params=params, data=data, headers=headers)
             duration = time.time() - start
             self.logger.debug("Request Completed in {} Seconds".format(round(duration,2)))
         except requests.exceptions.SSLError as e:
