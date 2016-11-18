@@ -11,6 +11,7 @@ from SolrClient.exceptions import *
 from .test_config import test_config
 from .RandomTestData import RandomTestData
 import shutil
+from functools import partial
 from datetime import datetime as dt
 test_config['indexqbase'] = os.getcwd()
 
@@ -404,6 +405,118 @@ class TestIndexQ(unittest.TestCase):
         self.assertEqual(index.get_all_as_list()[0], todo_file)
         self.assertFalse(index._is_locked())
 
+    def test_index_dynamic_collections_basic_1(self):
+        index = IndexQ(test_config['indexqbase'], 'testq')
+        solr = SolrClient(test_config['SOLR_SERVER'],
+                          devel=True,
+                          auth=test_config['SOLR_CREDENTIALS'])
+        if index._is_locked():
+            index._unlock()
+        self.assertEqual(index.get_all_as_list(), [])
+
+        #Set up mock for indexing
+        temp = {}
+        def mock(temp, coll, docs):
+            temp[coll] = docs
+            return True
+
+        todo_file = index.add([{'type': '1','data':'1'},
+                               {'type': '1','data':'2'},
+                               {'type': '1','data':'3'},
+                               {'type': '2','data':'4'},
+                               {'type': '3','data':'5'},
+                               ], finalize=True)
+        runner_wrap = index._wrap_dynamic(partial(mock, temp),
+                                    lambda x: x['type'],
+                                    todo_file)
+        self.assertTrue(runner_wrap)
+        self.assertEqual(json.loads(temp['3']), [{"data": "5", "type": "3"}])
+        self.assertEqual(json.loads(temp['2']), [{'type': '2','data':'4'}])
+        self.assertEqual(sorted(json.loads(temp['1']), key=lambda x: x['data']),
+                         sorted([{'type': '1','data':'1'},
+                                 {'type': '1','data':'2'},
+                                 {'type': '1','data':'3'}],
+                                key=lambda x: x['data']))
+        self.assertFalse(index.get_all_as_list()) #Make sure item is completed
+
+
+    def test_index_dynamic_collections_func_basic_error_1(self):
+        index = IndexQ(test_config['indexqbase'], 'testq')
+        solr = SolrClient(test_config['SOLR_SERVER'],
+                          devel=True,
+                          auth=test_config['SOLR_CREDENTIALS'])
+        if index._is_locked():
+            index._unlock()
+        self.assertEqual(index.get_all_as_list(), [])
+
+        #Set up mock for indexing
+        temp = {}
+        def mock(temp, coll, docs):
+            temp[coll] = docs
+        todo_file = index.add([{'type': '1','data':'1'},
+                               {'type': '1','data':'2'},
+                               {'type': '1','data':'3'},
+                               {'type': '2','data':'4'},
+                               {'type': '3','data':'5'},
+                               ], finalize=True)
+        with self.assertRaises(KeyError):
+            index._wrap_dynamic(partial(mock, temp),
+                                    lambda x: x['asdasdasd'],
+                                    todo_file)
+
+    def test_index_dynamic_collections_indexing_error(self):
+        index = IndexQ(test_config['indexqbase'], 'testq')
+        solr = SolrClient(test_config['SOLR_SERVER'],
+                          devel=True,
+                          auth=test_config['SOLR_CREDENTIALS'])
+        if index._is_locked():
+            index._unlock()
+        self.assertEqual(index.get_all_as_list(), [])
+
+        #Set up mock for indexing
+        temp = {}
+        def mock(temp, coll, docs):
+            raise KeyError()
+        todo_file = index.add([{'type': '1','data':'1'},
+                               {'type': '1','data':'2'},
+                               {'type': '1','data':'3'},
+                               {'type': '2','data':'4'},
+                               {'type': '3','data':'5'},
+                               ], finalize=True)
+        runner_wrap = index._wrap_dynamic(partial(mock, temp),
+                                    lambda x: x['type'],
+                                    todo_file)
+        self.assertFalse(runner_wrap)
+
+
+    def test_index_dynamic_collections_indexing_error_partial(self):
+        index = IndexQ(test_config['indexqbase'], 'testq')
+        solr = SolrClient(test_config['SOLR_SERVER'],
+                          devel=True,
+                          auth=test_config['SOLR_CREDENTIALS'])
+        if index._is_locked():
+            index._unlock()
+        self.assertEqual(index.get_all_as_list(), [])
+
+        #Set up mock for indexing
+        temp = {}
+        def mock(temp, coll, docs):
+            if json.loads(docs)[0]['type'] == '1':
+                raise KeyError()
+            else:
+                temp[coll] = docs
+                return True
+
+        todo_file = index.add([{'type': '1','data':'1'},
+                               {'type': '1','data':'2'},
+                               {'type': '1','data':'3'},
+                               {'type': '2','data':'4'},
+                               {'type': '3','data':'5'},
+                               ], finalize=True)
+        runner_wrap = index._wrap_dynamic(partial(mock, temp),
+                                    lambda x: x['type'],
+                                    todo_file)
+        self.assertFalse(runner_wrap)
 
     def test_thread_pool_low(self):
         '''

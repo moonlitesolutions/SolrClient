@@ -14,6 +14,18 @@ from functools import partial
 from SolrClient.exceptions import *
 
 
+def _wrap(method, collection, index, doc):
+    #Indexes entire file into the collection
+    try:
+        res = method(collection, doc)
+        if res:
+            index.complete(doc)
+        return res
+    except SolrError:
+        self.logger.error("Error Indexing Item: {}".format(doc))
+        pass
+
+
 class IndexQ():
     '''
     IndexQ sub module will help with indexing content into Solr. It can be used to de-couple data processing from indexing.
@@ -309,19 +321,17 @@ class IndexQ():
         except AttributeError:
             raise AttributeError("Couldn't find the send_method. Specify either stream_file or local_index")
 
-        self.logger.info("Indexing {} into {} using {}".format(self._queue_name, collection, send_method))
-        def _wrap(method, collection, index, doc):
-            try:
-                res = method(collection, doc)
-                if res:
-                    index.complete(doc)
-                return res
-            except SolrError:
-                self.logger.error("Error Indexing Item: {}".format(doc))
-                pass
-
+        self.logger.info("Indexing {} into {} using {}".format(self._queue_name,
+                                                               collection,
+                                                               send_method))
         if threads > 1:
-            method = partial(_wrap, method, collection, self)
+            if hasattr(collection, '__call__'):
+                self.logger.debug("Overwriting send_method to index_json")
+                method = getattr(solr, 'index_json')
+                method = partial(self._wrap_dynamic, method, collection, )
+            else:
+                method = partial(_wrap, method, collection, self)
+
             with ThreadPool(threads) as p:
                 p.map(method, self.get_todo_items())
         else:
@@ -336,6 +346,46 @@ class IndexQ():
                     raise
 
 
+    def _wrap_dynamic(self, method, collection, doc):
+        # Reads the file, executing 'collection' function on each item to
+        # get the name of collection it should be indexed into
+        try:
+            j_data = self._open_file(doc)
+            temp = {}
+            for item in j_data:
+                try:
+                    coll = collection(item)
+                    if coll in temp:
+                        temp[coll].append(item)
+                    else:
+                        temp[coll] = [item]
+                except Exception as e:
+                    self.logger.error("Exception caught on dynamic collection function")
+                    self.logger.error(item)
+                    self.logger.exception(e)
+                    raise
+
+            indexing_errors = 0
+            done = []
+            for coll in temp:
+                try:
+                    res = method(coll, json.dumps(temp[coll]))
+                    if res:
+                        done.append(coll)
+                except Exception as e:
+                    self.logger.error("Indexing {} items into {} failed".format(len(temp[coll]), coll))
+                    indexing_errors += 1
+            if len(done) == len(temp.keys()) and indexing_errors == 0:
+                self.complete(doc)
+                return True
+            return False
+
+        except SolrError as e:
+            self.logger.error("Error Indexing Item: {}".format(doc))
+            self.logger.exception(e)
+            pass
+
+
     def get_all_json_from_indexq(self):
         '''
         Gets all data from the todo files in indexq and returns one huge list of all data.
@@ -343,15 +393,17 @@ class IndexQ():
         files = self.get_all_as_list()
         out = []
         for efile in files:
-            if efile.endswith('.gz'):
-                f = gzip.open(efile,'rt',encoding='utf-8')
-            else:
-                f = open(efile)
-            f_data = json.load(f)
-            f.close()
-            out.extend(f_data)
+            out.extend(self._open_file(efile))
         return out
 
+    def _open_file(self, efile):
+        if efile.endswith('.gz'):
+            f = gzip.open(efile, 'rt', encoding='utf-8')
+        else:
+            f = open(efile)
+        f_data = json.load(f)
+        f.close()
+        return f_data
 
     def get_multi_q(self, sentinel='STOP'):
         '''

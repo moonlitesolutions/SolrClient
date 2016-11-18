@@ -199,7 +199,7 @@ class SolrClient:
                 file = open(filename,'r')
             js_data = file.read()
             file.close()
-            return self.index_json(collection,js_data)
+            return self.index_json(collection, js_data)
         else:
             raise IOError("{} File Not Found".format(file))
 
