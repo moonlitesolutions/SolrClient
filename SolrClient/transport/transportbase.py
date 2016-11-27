@@ -28,7 +28,7 @@ class TransportBase(object):
         if len(self._action_log) >= self._action_log_count:
             self._action_log.pop(0)
 
-    def _retry(self, function):
+    def _retry(function):
         '''
         Internal mechanism to try to send data to multiple Solr Hosts if
         the query fails on the first one.
