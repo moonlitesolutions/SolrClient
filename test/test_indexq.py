@@ -3,7 +3,6 @@ import gzip
 import logging
 import json
 import os
-from time import sleep
 import random
 from multiprocessing.pool import ThreadPool
 from SolrClient import SolrClient, IndexQ
@@ -206,7 +205,6 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
-            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs, indexdocs)
@@ -221,7 +219,6 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
-            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq', mode='out')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs, indexdocs)
@@ -236,7 +233,6 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
-            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq', mode='out')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs, indexdocs)
@@ -250,7 +246,6 @@ class TestIndexQ(unittest.TestCase):
         docs = []
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
-            sleep(1)
             docs.append(doc)
         index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = []
@@ -271,7 +266,6 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(rdocs, finalize=True)
             docs.append(doc)
-            sleep(.01)
         index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = []
         for x in index.get_todo_items():
@@ -287,7 +281,6 @@ class TestIndexQ(unittest.TestCase):
         docs = []
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
-            sleep(1)
             docs.append(doc)
         index = IndexQ(test_config['indexqbase'], 'testq', compress=False)
         indexdocs = []
