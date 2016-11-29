@@ -86,6 +86,18 @@ class Collections():
         collections = res['collections']
         return collections
 
+    def create(self, name, numShards, params=None):
+        """
+        Create a new collection.
+        """
+        if params is None:
+            params = {}
+        params.update(
+            name=name,
+            numShards=numShards
+        )
+        return self.api('CREATE', params)
+
     def _get_collection_counts(self, core_data):
         """
         Queries each core to get individual counts for each core for each shard.
