@@ -8,10 +8,11 @@ class TransportBase():
     Base Transport Class
     """
 
-    def __init__(self, solr, host=None, auth=(None, None), devel=None):
+    def __init__(self, solr, host=None, auth=(None, None), devel=None, shuffle_hosts=False):
         self.logger = logging.getLogger(str(__package__))
         self.HOST_CONNECTIONS = self._proc_host(host)
-        self.shuffle_hosts()
+        if shuffle_hosts is True:
+            self.shuffle_hosts()
         self.auth = auth
         self._devel = devel
         self._action_log = []
@@ -24,16 +25,6 @@ class TransportBase():
         elif type(host) is list:
             return host
         raise Exception("host:%s type: %s is not string or list of strings" % (host, type(host)))
-
-    def shuffle_hosts(self):
-        """
-        Shuffle hosts so we don't always query the first one.
-        Example: using in a webapp with X processes in Y servers, the hosts contacted will be more random.
-        The user can also call this function to reshuffle every 'x' seconds or before every request.
-        :return:
-        """
-        if len(self.HOST_CONNECTIONS) > 1:
-            self.HOST_CONNECTIONS = random.shuffle(self.HOST_CONNECTIONS)
 
     def shuffle_hosts(self):
         """
