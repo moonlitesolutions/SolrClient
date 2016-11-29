@@ -70,15 +70,15 @@ class Collections():
 
         return out
 
-    def collection_exists(self, collection):
+    def exists(self, collection):
         """
         Return True if a collection exists.
         """
-        all_collections = self.collection_list()
+        all_collections = self.list()
         if collection in all_collections:
             return True
 
-    def collection_list(self):
+    def list(self):
         """
         Returns a list[string] of all collection names on the cluster.
         """
