@@ -74,7 +74,7 @@ class Collections():
         """
         Return True if a collection exists.
         """
-        all_collections= self.collection_list()
+        all_collections = self.collection_list()
         if collection in all_collections:
             return True
 
@@ -85,7 +85,6 @@ class Collections():
         res, info = self.api('LIST')
         collections = res['collections']
         return collections
-
 
     def _get_collection_counts(self, core_data):
         """
