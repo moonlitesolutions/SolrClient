@@ -3,7 +3,6 @@ import gzip
 import logging
 import json
 import os
-from time import sleep
 from SolrClient import SolrClient
 from SolrClient.exceptions import *
 from .test_config import test_config
@@ -41,8 +40,8 @@ class ClientTestIndexing(unittest.TestCase):
         self.commit()
 
     def commit(self):
-        self.solr.commit(test_config['SOLR_COLLECTION'], openSearcher=True)
-        sleep(5)
+        # softCommit because we don't care about data on disk
+        self.solr.commit(test_config['SOLR_COLLECTION'], openSearcher=True, softCommit=True)
 
     def test_delete_doc_by_id_with_space(self):
         self.delete_docs()
@@ -90,7 +89,6 @@ class ClientTestIndexing(unittest.TestCase):
         self.solr.index_json(test_config['SOLR_COLLECTION'],
                              json.dumps(self.docs))
         self.commit()
-        sleep(5)
         for doc in self.docs:
             logging.debug("Checking {}".format(doc['id']))
             self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(),1)
@@ -101,7 +99,6 @@ class ClientTestIndexing(unittest.TestCase):
         self.docs = self.rand_docs.get_docs(53)
         self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps(self.docs))
         self.commit()
-        sleep(5)
         for doc in self.docs:
             logging.debug("Checking {}".format(doc['id']))
             self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
