@@ -1,11 +1,9 @@
 import unittest
 import logging
 import json
-import itertools
-import time
+import gzip
 import os
 import datetime
-from time import sleep
 from SolrClient import SolrClient, IndexQ, Reindexer
 from .test_config import test_config
 from .RandomTestData import RandomTestData
@@ -79,8 +77,7 @@ class ReindexerTests(unittest.TestCase):
             doc['date'] = new_date.isoformat() + 'Z'
 
         self.solr.index_json(coll, json.dumps(self.docs))
-        self.solr.commit(coll, openSearcher=True)
-        time.sleep(10)
+        self.solr.commit(coll, openSearcher=True, softCommit=True)
 
     def get_all_json_from_indexq(self, index):
         files = index.get_all_as_list()
@@ -336,7 +333,6 @@ class ReindexerTests(unittest.TestCase):
         self.assertEqual(len(solr.query(self.colls[0], {'q': '*:*', 'rows': 10000000}).docs), 50000)
         self.assertEqual(len(solr.query(self.colls[1], {'q': '*:*', 'rows': 10000000}).docs), 0)
         reindexer.resume()
-        sleep(10)
         # Make sure countc match up after reindex
         self.assertEqual(
             len(solr.query(self.colls[0], {'q': '*:*', 'rows': 10000000}).docs),
@@ -359,13 +355,11 @@ class ReindexerTests(unittest.TestCase):
                                                                  ))
         # Reindex approximately half of the data by restricting FQ
         reindexer.reindex(fq=['date:[* TO {}]'.format(midpoint.isoformat() + 'Z')])
-        sleep(10)
         # Make sure we have at least 20% of the data.
         dest_count = len(solr.query(self.colls[1], {'q': '*:*', 'rows': 10000000}).docs)
         s_count = len(solr.query(self.colls[0], {'q': '*:*', 'rows': 10000000}).docs)
         self.assertTrue(s_count > dest_count > s_count * .20)
         reindexer.resume()
-        sleep(10)
         # Make sure countc match up after reindex
         self.assertEqual(
             len(solr.query(self.colls[0], {'q': '*:*', 'rows': 10000000}).docs),
@@ -388,13 +382,11 @@ class ReindexerTests(unittest.TestCase):
                                                                  ))
         # Reindex approximately half of the data by restricting FQ
         reindexer.reindex(fq=['date:[{} TO *]'.format(midpoint.isoformat() + 'Z')])
-        sleep(10)
         # Make sure we have at least 20% of the data.
         dest_count = len(solr.query(self.colls[1], {'q': '*:*', 'rows': 10000000}).docs)
         s_count = len(solr.query(self.colls[0], {'q': '*:*', 'rows': 10000000}).docs)
         self.assertTrue(s_count > dest_count > s_count * .20)
         reindexer.resume()
-        sleep(10)
         # Make sure countc match up after reindex
         self.assertEqual(
             len(solr.query(self.colls[0], {'q': '*:*', 'rows': 10000000}).docs),
