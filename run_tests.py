@@ -4,7 +4,7 @@ import subprocess
 import os
 from pprint import pprint
 import argparse
-PYS = ['3.3', '3.3', '3.4']
+PYS = ['3.3', '3.4']
 SOLRS = ['5.2.1', '5.5.3', '6.1.0', '6.2.1']
 TESTS = ['test_client', 'test_indexq', 'test_reindexer', 'test_resp',
          'test_collections', 'test_zk']
@@ -28,6 +28,7 @@ REPORT = {}
 for ver in PYS:
     res = subprocess.call(["python3", "/usr/local/bin/tox", "-e", "py{}".format(ver.replace('.',''))])
     python = '.tox/py{}/bin/python{}'.format(ver.replace('.', ''), ver)
+    subprocess.call([".tox/py{}/bin/pip".format(ver.replace('.', '')), "install", "-r", "requirements.txt"])
     REPORT[ver] = {}
     for solr in SOLRS:
         REPORT[ver][solr] = {}

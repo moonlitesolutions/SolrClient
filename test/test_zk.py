@@ -13,7 +13,7 @@ from .RandomTestData import RandomTestData
 
 
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
-
+logging.disable(logging.CRITICAL)
 class ZKTest(unittest.TestCase):
     #High level zk tests
 

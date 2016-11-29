@@ -12,7 +12,7 @@ from .RandomTestData import RandomTestData
 
 test_config['indexqbase']=os.getcwd()
 #logging.basicConfig(level=logging.INFO,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
-
+logging.disable(logging.CRITICAL)
 class ReindexerTests(unittest.TestCase):
 
     #Methos to create the schema in the collections

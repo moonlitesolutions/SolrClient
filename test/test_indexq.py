@@ -15,7 +15,7 @@ from functools import partial
 from datetime import datetime as dt
 test_config['indexqbase'] = os.getcwd()
 
-
+logging.disable(logging.CRITICAL)
 class TestIndexQ(unittest.TestCase):
 
     @classmethod

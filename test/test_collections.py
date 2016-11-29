@@ -13,8 +13,7 @@ import random
 
 
 # logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
-
-
+logging.disable(logging.CRITICAL)
 
 class test_collections(unittest.TestCase):
     # High Level Client Tests

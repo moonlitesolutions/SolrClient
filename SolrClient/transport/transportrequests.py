@@ -4,8 +4,10 @@ from ..exceptions import SolrError, ConnectionError
 
 try:
     import requests
+    req = True
 except ImportError:
-    raise ImportError("Requests Module not found. Please install it before using this transport")
+    req = False
+
 
 
 class TransportRequests(TransportBase):
@@ -14,6 +16,8 @@ class TransportRequests(TransportBase):
     """
 
     def setup(self):
+        if not req:
+            raise ImportError("Requests Module not found. Please install it before using this transport")
         self.session = requests.session()
         if self.auth:
             self.session.auth = (self.auth[0], self.auth[1])

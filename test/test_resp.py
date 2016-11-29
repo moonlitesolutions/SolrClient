@@ -7,16 +7,16 @@ from SolrClient import SolrClient
 from .test_config import test_config
 from .RandomTestData import RandomTestData
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
-     
+logging.disable(logging.CRITICAL)
 class ClientTestQuery(unittest.TestCase):
-    
+
     @classmethod
     def setUpClass(self):
         self.solr = SolrClient(test_config['SOLR_SERVER'][0],devel=True,auth=test_config['SOLR_CREDENTIALS'])
         self.rand_docs = RandomTestData()
         self.docs = self.rand_docs.get_docs(50)
         self.solr.delete_doc_by_id(test_config['SOLR_COLLECTION'],'*')
-        
+
         for field in test_config['collections']['copy_fields']:
             try:
                 self.solr.collections.delete_copy_field(test_config['SOLR_COLLECTION'],field)
@@ -27,15 +27,15 @@ class ClientTestQuery(unittest.TestCase):
                 self.solr.collections.create_field(test_config['SOLR_COLLECTION'],field)
             except:
                 pass
-        
+
         #Index Some data
         self.solr.index_json(test_config['SOLR_COLLECTION'],json.dumps(self.docs))
         self.solr.commit(test_config['SOLR_COLLECTION'],openSearcher=True)
-    
+
     def test_basic_query(self):
         r = self.solr.query(test_config['SOLR_COLLECTION'],{'q':'*:*'})
         self.assertEqual(r.get_num_found(),len(self.docs))
-        
+
     def test_facet(self):
         r = self.solr.query(test_config['SOLR_COLLECTION'],{
             'q':'*:*',
@@ -56,7 +56,7 @@ class ClientTestQuery(unittest.TestCase):
             logging.info("facets")
             logging.info(r.get_facets())
             raise
-    
+
     def test_facet_with_fq(self):
         r = self.solr.query(test_config['SOLR_COLLECTION'],{
             'q':'*:*',
@@ -72,7 +72,7 @@ class ClientTestQuery(unittest.TestCase):
             'fq':'facet_test:{}'.format(first_facet_field)
         })
         self.assertEqual(r.get_num_found(),first_facet_field_count)
-        
+
     def test_facet_range(self):
         res = self.solr.query(test_config['SOLR_COLLECTION'],{
             'q':'*:*',
@@ -82,14 +82,14 @@ class ClientTestQuery(unittest.TestCase):
             'facet.range.end':100,
             'facet.range.gap':10
             })
-        
+
         prices = [doc['price'] for doc in self.docs]
         div = lambda x: str(x//10 * 10)
         out = {}
         for k,g in itertools.groupby(sorted(prices),div):
             out[k] = len(list(g)) or 0
         self.assertDictEqual(out,res.get_facets_ranges()['price'])
-    
+
     def test_facet_pivot(self):
         res = self.solr.query(test_config['SOLR_COLLECTION'],{
             'q':'*:*',
@@ -105,7 +105,7 @@ class ClientTestQuery(unittest.TestCase):
             else:
                 out[doc['facet_test']][doc['price']]+=1
         self.assertDictEqual(out,res.get_facet_pivot()['facet_test,price'])
-        
+
     def test_get_field_values_as_list(self):
         res = self.solr.query(test_config['SOLR_COLLECTION'],{
             'q':'*:*',
@@ -117,7 +117,7 @@ class ClientTestQuery(unittest.TestCase):
             if 'product_name_exact' in doc:
                 temp.append(doc['product_name_exact'])
         self.assertEqual(results,temp)
-        
+
     def test_get_facet_values_as_list(self):
         r = self.solr.query(test_config['SOLR_COLLECTION'],{
             'q':'*:*',
