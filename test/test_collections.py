@@ -33,10 +33,10 @@ class test_collections(unittest.TestCase):
             'collection.configName': 'basic_configs'
         })
         self.assertTrue('success' in res)
-        # also test collection_exists()
-        self.assertTrue(self.solr.collections.collection_exists(temp))
-        # also test collection_list()
-        self.assertTrue(temp in self.solr.collections.collection_list())
+        # also test exists()
+        self.assertTrue(self.solr.collections.exists(temp))
+        # also test list()
+        self.assertTrue(temp in self.solr.collections.list())
         with self.assertRaises(SolrError):
             # Make sure error is returned if I try to
             # create collection with the same name
