@@ -70,6 +70,23 @@ class Collections():
 
         return out
 
+    def collection_exists(self, collection):
+        """
+        Return True if a collection exists.
+        """
+        all_collections= self.collection_list()
+        if collection in all_collections:
+            return True
+
+    def collection_list(self):
+        """
+        Returns a list[string] of all collection names on the cluster.
+        """
+        res, info = self.api('LIST')
+        collections = res['collections']
+        return collections
+
+
     def _get_collection_counts(self, core_data):
         """
         Queries each core to get individual counts for each core for each shard.

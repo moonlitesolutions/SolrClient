@@ -8,7 +8,6 @@ from SolrClient import SolrClient
 from SolrClient.exceptions import *
 from .test_config import test_config
 from .RandomTestData import RandomTestData
-from unittest.mock import Mock
 import random
 
 
@@ -34,6 +33,10 @@ class test_collections(unittest.TestCase):
                                 'collection.configName': 'basic_configs'
                                 })
         self.assertTrue('success' in res)
+        # also test collection_exists()
+        self.assertTrue(self.solr.collections.collection_exists(temp))
+        # also test collection_list()
+        self.assertTrue(temp in self.solr.collections.collection_list())
         with self.assertRaises(SolrError):
             # Make sure error is returned if I try to
             # create collection with the same name
