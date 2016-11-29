@@ -1,11 +1,7 @@
 import unittest
-import gzip
 import logging
-import json
 import os
-import code
 import random
-from time import sleep
 from SolrClient import SolrClient
 from SolrClient.exceptions import *
 from .test_config import test_config
@@ -32,7 +28,6 @@ class ZKTest(unittest.TestCase):
                                 'replicationFactor': 1,
                                 'collection.configName': 'basic_configs'
                                 })
-        sleep(2)
         self.zk = self.solr.get_zk()
 
     @classmethod
