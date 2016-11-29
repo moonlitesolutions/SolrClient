@@ -17,7 +17,7 @@ class Collections():
         self.logger = log
         self.solr_clients = {}
 
-    def api(self, action, args={}):
+    def api(self, action, args=None):
         """
         Sends a request to Solr Collections API.
         Documentation is here: https://cwiki.apache.org/confluence/display/solr/Collections+API
@@ -25,6 +25,8 @@ class Collections():
         :param string action: Name of the collection for the action
         :param dict args: Dictionary of specific parameters for action
         """
+        if args is None:
+            args = {}
         args['action'] = action.upper()
 
         try:
@@ -101,7 +103,7 @@ class Collections():
             for shard in cluster_resp[collection]:
                 yield collection, shard, cluster_resp[collection][shard]
 
-    def check_status(self, ignore=[], status=None):
+    def check_status(self, ignore=(), status=None):
         """
         Checks status of each collection and shard to make sure that:
           a) Cluster state is active
