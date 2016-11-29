@@ -35,6 +35,16 @@ class TransportBase():
         if len(self.HOST_CONNECTIONS) > 1:
             self.HOST_CONNECTIONS = random.shuffle(self.HOST_CONNECTIONS)
 
+    def shuffle_hosts(self):
+        """
+        Shuffle hosts so we don't always query the first one.
+        Example: using in a webapp with X processes in Y servers, the hosts contacted will be more random.
+        The user can also call this function to reshuffle every 'x' seconds or before every request.
+        :return:
+        """
+        if len(self.HOST_CONNECTIONS) > 1:
+            self.HOST_CONNECTIONS = random.shuffle(self.HOST_CONNECTIONS)
+
     def _add_to_action(self, action):
         self._action_log.append(action)
         if len(self._action_log) >= self._action_log_count:
