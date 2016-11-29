@@ -1,12 +1,8 @@
 import unittest
-import gzip
 import logging
-import json
-import os
-from time import sleep
 from SolrClient import SolrClient
 from .test_config import test_config
-from .RandomTestData import RandomTestData
+
 
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 logging.disable(logging.CRITICAL)
@@ -46,22 +42,16 @@ class schemaTest(unittest.TestCase):
                 self.assertFalse(self.solr.schema.does_field_exist(test_config['SOLR_COLLECTION'],field['name']))
 
     def test_create_fields(self):
-        pause = 6
         #Delete Fields if they exist
         self.delete_fields()
-        sleep(pause)
         #Check to Make Sure fields were deleted
-        sleep(pause)
         self.check_fields(False)
         #Create new Fields
-        sleep(pause)
         self.create_fields()
         #Make sure they are there
-        sleep(pause)
         self.check_fields(True)
         #Create Copy Fields
         self.create_copy_fields()
-        sleep(pause)
 
     def test_check_if_field_exists(self):
         self.assertTrue(self.solr.schema.does_field_exist(test_config['SOLR_COLLECTION'],'id'))
