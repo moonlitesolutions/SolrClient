@@ -104,7 +104,7 @@ class SolrClient:
                                                     params=params,
                                                     data=data,
                                                     headers=headers,
-                                                    *kwargs)
+                                                    **kwargs)
 
         if resp:
             resp = SolrResponse(resp)
@@ -129,7 +129,7 @@ class SolrClient:
                                                     collection=collection,
                                                     data=data,
                                                     params=params,
-                                                    *kwargs)
+                                                    **kwargs)
 
         if resp['responseHeader']['status'] == 0:
             return True
@@ -153,7 +153,7 @@ class SolrClient:
                                                     endpoint='update',
                                                     collection=collection,
                                                     data=json.dumps(temp),
-                                                    *kwargs)
+                                                    **kwargs)
         return resp
 
     def delete_doc_by_query(self, collection, query, **kwargs):
@@ -171,7 +171,7 @@ class SolrClient:
                                                     endpoint='update',
                                                     collection=collection,
                                                     data=json.dumps(temp),
-                                                    *kwargs)
+                                                    **kwargs)
         return resp
 
     def stream_file(self, collection, filename, **kwargs):
@@ -215,7 +215,7 @@ class SolrClient:
         data = {'stream.file': filename,
                 'stream.contentType': 'text/json'}
         resp, con_inf = self.transport.send_request(method='GET', endpoint='update/json', collection=collection,
-                                                    params=data, *kwargs)
+                                                    params=data, **kwargs)
         if resp['responseHeader']['status'] == 0:
             return True
         else:
