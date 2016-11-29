@@ -25,13 +25,8 @@ class test_collections(unittest.TestCase):
 
     def test_create_collection(self):
         temp = test_config['SOLR_COLLECTION'] + str(random.random() * 100)
-
-        res, con_info = self.solr.collections.api('create', {
-            'name': temp,
-            'numShards': 1,
-            'replicationFactor': 1,
-            'collection.configName': 'basic_configs'
-        })
+        params = {'replicationFactor': 1, 'collection.configName': 'basic_configs'}
+        res, con_info = self.solr.collections.create(temp, 1, params=params)
         self.assertTrue('success' in res)
         # also test exists()
         self.assertTrue(self.solr.collections.exists(temp))
