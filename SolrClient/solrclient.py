@@ -112,7 +112,21 @@ class SolrClient:
             resp.url = con_inf['url']
             return resp
 
-    def index_json(self, collection, data, params={}, **kwargs):
+    def index(self, collection, docs, params=None, **kwargs):
+        """
+        :param str collection: The name of the collection for the request.
+        :param docs list docs: List of dicts. ex: [{"title": "testing solr indexing", "id": "test1"}]
+
+        Sends supplied list of dicts to solr for indexing.  ::
+
+            >>> docs = [{'id':'changeme','field1':'value1'}, {'id':'changeme1','field2':'value2'}]
+            >>> solr.index('SolrClient_unittest', docs)
+
+        """
+        data = json.dumps(docs)
+        return self.index(collection, data, params, **kwargs)
+
+    def index_json(self, collection, data, params=None, **kwargs):
         """
         :param str collection: The name of the collection for the request.
         :param data str data: Valid Solr JSON as a string. ex: '[{"title": "testing solr indexing", "id": "test1"}]'
@@ -124,6 +138,8 @@ class SolrClient:
             >>> solr.index_json('SolrClient_unittest',json.dumps(docs))
 
         """
+        if params is None:
+            params = {}
 
         resp, con_inf = self.transport.send_request(method='POST',
                                                     endpoint='update',
@@ -134,8 +150,7 @@ class SolrClient:
 
         if resp['responseHeader']['status'] == 0:
             return True
-        else:
-            return False
+        return False
 
     def get(self, collection, doc_id, **kwargs):
         """
