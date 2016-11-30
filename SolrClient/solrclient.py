@@ -2,23 +2,22 @@ import gzip
 import os
 import json
 import logging
-import time
 from .transport import TransportRequests
 from .schema import Schema
-from .exceptions import *
 from .solrresp import SolrResponse
 from .collections import Collections
 from .zk import ZK
 
-class SolrClient:
-    '''
 
+class SolrClient:
+    """
     Creates a new SolrClient.
 
     :param host: Specifies the location of Solr Server. ex 'http://localhost:8983/solr'. Can also take a list of host values in which case it will use the first server specified, but will switch over to the second one if the first one is not available.
     :param transport: Transport class to use. So far only requests is supported.
     :param bool devel: Can be turned on during development or debugging for a much greater logging. Requires logging to be configured with DEBUG level.
-    '''
+    """
+
     def __init__(self,
                  host='http://localhost:8983/solr',
                  transport=TransportRequests,
@@ -37,7 +36,7 @@ class SolrClient:
 
     def commit(self, collection, openSearcher=False, softCommit=False,
                waitSearcher=True, commit=True, **kwargs):
-        '''
+        """
         :param str collection: The name of the collection for the request
         :param bool openSearcher: If new searcher is to be opened
         :param bool softCommit: SoftCommit
@@ -46,7 +45,7 @@ class SolrClient:
 
         Sends a commit to a Solr collection.
 
-        '''
+        """
         comm = {
             'openSearcher': str(openSearcher).lower(),
             'softCommit': str(softCommit).lower(),
@@ -56,13 +55,13 @@ class SolrClient:
 
         self.logger.debug("Sending Commit to Collection {}".format(collection))
         try:
-            resp, con_inf = self.transport.send_request(method='GET', endpoint= 'update', collection=collection, params=comm, **kwargs)
+            resp, con_inf = self.transport.send_request(method='GET', endpoint='update', collection=collection,
+                                                        params=comm, **kwargs)
         except Exception as e:
             raise
         self.logger.debug("Commit Successful, QTime is {}".format(resp['responseHeader']['QTime']))
 
-
-    def query(self,collection,query,request_handler='select',**kwargs):
+    def query(self, collection, query, request_handler='select', **kwargs):
         """
         :param str collection: The name of the collection for the request
         :param str request_handler: Request handler, default is 'select'
@@ -81,9 +80,9 @@ class SolrClient:
         for field in ['facet.pivot']:
             if field in query.keys():
                 if type(query[field]) is str:
-                    query[field] = query[field].replace(' ','')
+                    query[field] = query[field].replace(' ', '')
                 elif type(query[field]) is list:
-                    query[field] = [s.replace(' ','') for s in query[field]]
+                    query[field] = [s.replace(' ', '') for s in query[field]]
 
         # If the query is long, use POST instead of GET. Estimate query string
         # length by converting the query dict to a string since at this point
@@ -105,18 +104,15 @@ class SolrClient:
                                                     params=params,
                                                     data=data,
                                                     headers=headers,
-                                                    *kwargs)
+                                                    **kwargs)
 
         if resp:
             resp = SolrResponse(resp)
             resp.url = con_inf['url']
             return resp
 
-
-
-
     def index_json(self, collection, data, params={}, **kwargs):
-        '''
+        """
         :param str collection: The name of the collection for the request.
         :param data str data: Valid Solr JSON as a string. ex: '[{"title": "testing solr indexing", "id": "test1"}]'
 
@@ -126,14 +122,14 @@ class SolrClient:
                         {'id':'changeme1','field2':'value2'}]
             >>> solr.index_json('SolrClient_unittest',json.dumps(docs))
 
-        '''
+        """
 
         resp, con_inf = self.transport.send_request(method='POST',
                                                     endpoint='update',
                                                     collection=collection,
                                                     data=data,
                                                     params=params,
-                                                    *kwargs)
+                                                    **kwargs)
 
         if resp['responseHeader']['status'] == 0:
             return True
@@ -141,7 +137,7 @@ class SolrClient:
             return False
 
     def delete_doc_by_id(self, collection, doc_id, **kwargs):
-        '''
+        """
         :param str collection: The name of the collection for the request
         :param str id: ID of the document to be deleted. Can specify '*' to delete everything.
 
@@ -149,7 +145,7 @@ class SolrClient:
 
             >>> solr.delete_doc_by_id('SolrClient_unittest','changeme')
 
-        '''
+        """
         if ' ' in doc_id:
             doc_id = '"{}"'.format(doc_id)
         temp = {"delete": {"query": 'id:{}'.format(doc_id)}}
@@ -157,11 +153,11 @@ class SolrClient:
                                                     endpoint='update',
                                                     collection=collection,
                                                     data=json.dumps(temp),
-                                                    *kwargs)
+                                                    **kwargs)
         return resp
 
     def delete_doc_by_query(self, collection, query, **kwargs):
-        '''
+        """
         :param str collection: The name of the collection for the request
         :param str query: Query selecting documents to be deleted.
 
@@ -169,17 +165,17 @@ class SolrClient:
 
             >>> solr.delete_doc_by_query('SolrClient_unittest','*:*')
 
-        '''
+        """
         temp = {"delete": {"query": query}}
         resp, con_inf = self.transport.send_request(method='POST',
                                                     endpoint='update',
                                                     collection=collection,
                                                     data=json.dumps(temp),
-                                                    *kwargs)
+                                                    **kwargs)
         return resp
 
     def stream_file(self, collection, filename, **kwargs):
-        '''
+        """
 
         :param str collection: The name of the collection for the request
         :param str filename: Filename of json file to index.
@@ -189,22 +185,20 @@ class SolrClient:
 
             >>> solr.local_index('SolrClient_unittest',
                                        '/local/to/script/temp_file.json')
-
-        '''
-        if os.path.isfile(filename):
-            self.logger.info("Indexing {} into Solr Collection {}".format(filename,collection))
-            if filename.endswith('gz'):
-                file =  gzip.open(filename,'r')
-            else:
-                file = open(filename,'r')
-            js_data = file.read()
-            file.close()
-            return self.index_json(collection, js_data)
+        """
+        if not os.path.isfile(filename):
+            raise IOError("{} File Not Found".format(filename))
+        self.logger.info("Indexing {} into Solr Collection {}".format(filename, collection))
+        if filename.endswith('gz'):
+            open_function = gzip.open
         else:
-            raise IOError("{} File Not Found".format(file))
+            open_function = open
+        with open_function(filename, 'r') as file:
+            js_data = file.read()
+        return self.index_json(collection, js_data)
 
     def local_index(self, collection, filename, **kwargs):
-        '''
+        """
         :param str collection: The name of the collection for the request
         :param str filename: String file path of the file to index.
 
@@ -214,21 +208,22 @@ class SolrClient:
 
             >>> solr.local_index('SolrClient_unittest',
                                        '/local/to/server/temp_file.json')
-        '''
+        """
         filename = os.path.abspath(filename)
-        self.logger.info("Indexing {} into Solr Collection {}".format(filename,collection))
+        self.logger.info("Indexing {} into Solr Collection {}".format(filename, collection))
 
-        data = {'stream.file' : filename,
-                'stream.contentType' : 'text/json'}
-        resp, con_inf = self.transport.send_request(method='GET', endpoint='update/json', collection=collection, params=data, *kwargs)
+        data = {'stream.file': filename,
+                'stream.contentType': 'text/json'}
+        resp, con_inf = self.transport.send_request(method='GET', endpoint='update/json', collection=collection,
+                                                    params=data, **kwargs)
         if resp['responseHeader']['status'] == 0:
             return True
         else:
             return False
 
-    #Version 0.0.7
+    # Version 0.0.7
     def paging_query(self, collection, query, rows=1000, start=0, max_start=200000):
-        '''
+        """
         :param str collection: The name of the collection for the request.
         :param dict query: Dictionary of solr args.
         :param int rows: Number of rows to return in each batch. Default is 1000.
@@ -244,7 +239,7 @@ class SolrClient:
             >>> for res in solr.paging_query('SolrClient_unittest',{'q':'*:*'}):
                     print(res)
 
-        '''
+        """
         query = dict(query)
         while True:
             query['start'] = start
@@ -256,9 +251,8 @@ class SolrClient:
             if res.get_results_count() < rows or start > max_start:
                 break
 
-
     def cursor_query(self, collection, query):
-        '''
+        """
         :param str collection: The name of the collection for the request.
         :param dict query: Dictionary of solr args.
 
@@ -269,13 +263,13 @@ class SolrClient:
 
             >>> for res in solr.cursor_query('SolrClient_unittest',{'q':'*:*'}):
                     print(res)
-        '''
+        """
         cursor = '*'
         if 'sort' not in query:
             query['sort'] = 'id desc'
         while True:
             query['cursorMark'] = cursor
-            #Get data with starting cursorMark
+            # Get data with starting cursorMark
             results = self.query(collection, query)
             if results.get_results_count():
                 cursor = results.get_cursor()
