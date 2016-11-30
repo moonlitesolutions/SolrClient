@@ -3,6 +3,7 @@ import os
 import json
 import logging
 from .transport import TransportRequests
+from .exceptions import NotFoundError
 from .schema import Schema
 from .solrresp import SolrResponse
 from .collections import Collections
