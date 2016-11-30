@@ -28,8 +28,8 @@ class Schema():
         return res
 
     def get_schema_copyfields(self, collection):
-        res, con_info = self.solr.transport.send_request(endpoint='schema/copyfields',collection=collection)
-        return res
+        res, con_info = self.solr.transport.send_request(endpoint='schema/copyfields', collection=collection)
+        return res['copyFields']
 
 
     def create_field(self, collection, field_dict):
@@ -131,7 +131,3 @@ class Schema():
         temp = {"delete-copy-field": dict(copy_dict)}
         res, con_info = self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
         return res
-
-    def get_schema_copyfields(self, collection):
-        res, con_info = self.solr.transport.send_request(endpoint='schema/copyfields', collection=collection)
-        return res['copyFields']
