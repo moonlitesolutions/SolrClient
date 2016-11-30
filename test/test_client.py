@@ -107,6 +107,8 @@ class ClientTestIndexing(unittest.TestCase):
             raise Exception('document 5 exists but shouldnt')
         except NotFoundError:
             pass
+        docs = self.solr.mget(test_config['SOLR_COLLECTION'], ('5', '1'))
+        assert len(docs) > 0
 
     def test_indexing_conn_log(self):
         self.docs = self.rand_docs.get_docs(53)

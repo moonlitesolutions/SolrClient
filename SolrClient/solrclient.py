@@ -172,6 +172,24 @@ class SolrClient:
             raise NotFoundError
         return doc
 
+    def mget(self, collection, doc_ids, **kwargs):
+        """
+        :param str collection: The name of the collection for the request
+        :param tuple doc_ids: ID of the document to be retrieved.
+
+        Retrieve documents from Solr based on the ID. ::
+
+            >>> solr.get('SolrClient_unittest','changeme')
+        """
+
+        resp, con_inf = self.transport.send_request(method='GET',
+                                                    endpoint='get',
+                                                    collection=collection,
+                                                    params={'id': doc_ids},
+                                                    **kwargs)
+        docs = resp['response']['docs']
+        return docs
+
     def delete_doc_by_id(self, collection, doc_id, **kwargs):
         """
         :param str collection: The name of the collection for the request
