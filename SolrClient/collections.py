@@ -7,9 +7,9 @@ from .solrresp import SolrResponse
 
 
 class Collections():
-    '''
+    """
     Provides an interface to Solr Collections API.
-    '''
+    """
 
     def __init__(self, solr, log):
 
@@ -17,14 +17,16 @@ class Collections():
         self.logger = log
         self.solr_clients = {}
 
-    def api(self, action, args={}):
-        '''
+    def api(self, action, args=None):
+        """
         Sends a request to Solr Collections API.
         Documentation is here: https://cwiki.apache.org/confluence/display/solr/Collections+API
 
         :param string action: Name of the collection for the action
         :param dict args: Dictionary of specific parameters for action
-        '''
+        """
+        if args is None:
+            args = {}
         args['action'] = action.upper()
 
         try:
@@ -32,7 +34,7 @@ class Collections():
         except Exception as e:
             self.logger.error("Error querying SolrCloud Collections API. ")
             self.logger.exception(e)
-            raise
+            raise e
 
         if 'responseHeader' in res and res['responseHeader']['status'] == 0:
             return res, con_info
@@ -40,13 +42,13 @@ class Collections():
             raise SolrError("Error Issuing Collections API Call for: {} +".format(con_info, res))
 
     def clusterstatus(self):
-        '''
+        """
         Returns a slightly slimmed down version of the clusterstatus api command. It also gets count of documents in each shard on each replica and returns
         it as doc_count key for each replica.
 
-        '''
+        """
 
-        res, con_info =  self.api('clusterstatus')
+        res, con_info = self.api('clusterstatus')
 
         cluster = res['cluster']['collections']
         out = {}
@@ -60,24 +62,53 @@ class Collections():
                         if out[collection][shard][replica]['state'] != 'active':
                             out[collection][shard][replica]['doc_count'] = False
                         else:
-                            out[collection][shard][replica]['doc_count'] = self._get_collection_counts(out[collection][shard][replica])
+                            out[collection][shard][replica]['doc_count'] = self._get_collection_counts(
+                                out[collection][shard][replica])
         except Exception as e:
             self.logger.error("Couldn't parse response from clusterstatus API call")
             self.logger.exception(e)
 
         return out
 
+    def exists(self, collection):
+        """
+        Return True if a collection exists.
+        """
+        all_collections = self.list()
+        if collection in all_collections:
+            return True
+
+    def list(self):
+        """
+        Returns a list[string] of all collection names on the cluster.
+        """
+        res, info = self.api('LIST')
+        collections = res['collections']
+        return collections
+
+    def create(self, name, numShards, params=None):
+        """
+        Create a new collection.
+        """
+        if params is None:
+            params = {}
+        params.update(
+            name=name,
+            numShards=numShards
+        )
+        return self.api('CREATE', params)
+
     def _get_collection_counts(self, core_data):
-        '''
+        """
         Queries each core to get individual counts for each core for each shard.
-        '''
+        """
         if core_data['base_url'] not in self.solr_clients:
             from SolrClient import SolrClient
-            self.solr_clients['base_url'] =  SolrClient(core_data['base_url'], log = self.logger)
+            self.solr_clients['base_url'] = SolrClient(core_data['base_url'], log=self.logger)
         try:
             return self.solr_clients['base_url'].query(core_data['core'],
-                                                        {'q':'*:*',
-                                                        'rows':0,
+                                                       {'q': '*:*',
+                                                        'rows': 0,
                                                         'distrib': 'false',
                                                         }).get_num_found()
         except Exception as e:
@@ -100,14 +131,13 @@ class Collections():
             for shard in cluster_resp[collection]:
                 yield collection, shard, cluster_resp[collection][shard]
 
-
-    def check_status(self, ignore=[], status=None):
-        '''
+    def check_status(self, ignore=(), status=None):
+        """
         Checks status of each collection and shard to make sure that:
           a) Cluster state is active
           b) Number of docs matches across replicas for a given shard.
         Returns a dict of results for custom alerting.
-        '''
+        """
         self.SHARD_CHECKS = [
             {'check_msg': 'Bad Core Count Check', 'f': self._check_shard_count},
             {'check_msg': 'Bad Shard Cluster Status', 'f': self._check_shard_status}
@@ -117,7 +147,7 @@ class Collections():
         out = {}
         for collection in status:
             out[collection] = {}
-            out[collection]['coll_status'] = True #Means it's fine
+            out[collection]['coll_status'] = True  # Means it's fine
             out[collection]['coll_messages'] = []
             for shard in status[collection]:
                 self.logger.debug("Checking {}/{}".format(collection, shard))
