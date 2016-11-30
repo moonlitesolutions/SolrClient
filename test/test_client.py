@@ -3,14 +3,15 @@ import gzip
 import logging
 import json
 import os
-from time import sleep
 from SolrClient import SolrClient
 from SolrClient.exceptions import *
 from .test_config import test_config
 from .RandomTestData import RandomTestData
 
-#logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+# logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 logging.disable(logging.CRITICAL)
+
+
 class ClientTestIndexing(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -41,13 +42,13 @@ class ClientTestIndexing(unittest.TestCase):
         self.commit()
 
     def commit(self):
-        self.solr.commit(test_config['SOLR_COLLECTION'], openSearcher=True)
-        sleep(5)
+        # softCommit because we don't care about data on disk
+        self.solr.commit(test_config['SOLR_COLLECTION'], openSearcher=True, softCommit=True)
 
     def test_delete_doc_by_id_with_space(self):
         self.delete_docs()
         self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps(
-                        [{'id': 'potato potato', 'product_name': 'potato'}]))
+            [{'id': 'potato potato', 'product_name': 'potato'}]))
         self.commit()
         self.assertTrue(
             len(self.solr.query(test_config['SOLR_COLLECTION'],
@@ -63,7 +64,7 @@ class ClientTestIndexing(unittest.TestCase):
     def test_delete_doc_by_query(self):
         self.delete_docs()
         self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps(
-                        [{'id': 'potato potato', 'product_name': 'potato'}]))
+            [{'id': 'potato potato', 'product_name': 'potato'}]))
         self.commit()
         self.assertTrue(
             len(self.solr.query(test_config['SOLR_COLLECTION'],
@@ -84,16 +85,15 @@ class ClientTestIndexing(unittest.TestCase):
         with self.assertRaises(ConnectionError) as cm:
             solr.query('SolrClient_unittest', {'q': 'not_gonna_happen'})
 
-
     def test_indexing_json(self):
         self.docs = self.rand_docs.get_docs(53)
         self.solr.index_json(test_config['SOLR_COLLECTION'],
                              json.dumps(self.docs))
         self.commit()
-        sleep(5)
         for doc in self.docs:
             logging.debug("Checking {}".format(doc['id']))
-            self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(),1)
+            self.assertEqual(
+                self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
         self.delete_docs()
         self.commit()
 
@@ -112,10 +112,10 @@ class ClientTestIndexing(unittest.TestCase):
         self.docs = self.rand_docs.get_docs(53)
         self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps(self.docs))
         self.commit()
-        sleep(5)
         for doc in self.docs:
             logging.debug("Checking {}".format(doc['id']))
-            self.assertEqual(self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
+            self.assertEqual(
+                self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
         logging.info(self.solr.transport._action_log)
         self.delete_docs()
         self.commit()
@@ -135,7 +135,6 @@ class ClientTestIndexing(unittest.TestCase):
             os.remove('temp_file.json')
         except:
             pass
-
 
     def test_stream_file_gzip_file(self):
         self.docs = self.rand_docs.get_docs(60)
@@ -188,8 +187,8 @@ class ClientTestIndexing(unittest.TestCase):
         self.assertEqual(
             [x['id'] for x in sorted(docs, key=lambda x: x['id'])],
             [x['id'] for x in sorted(self.docs, key=lambda x: x['id'])]
-            )
-        self.assertTrue(1000/50 == queries)
+        )
+        self.assertTrue(1000 / 50 == queries)
         self.delete_docs()
         self.commit()
         try:
@@ -216,7 +215,7 @@ class ClientTestIndexing(unittest.TestCase):
         self.assertEqual(
             [x['id'] for x in sorted(docs, key=lambda x: x['id'])],
             [x['id'] for x in sorted(self.docs, key=lambda x: x['id'])]
-            )
+        )
         self.delete_docs()
         self.commit()
         try:
@@ -227,15 +226,15 @@ class ClientTestIndexing(unittest.TestCase):
 
     def test_paging_query_with_max(self):
         self.docs = self.rand_docs.get_docs(1000)
-        with gzip.open('temp_file.json.gz','wb') as f:
+        with gzip.open('temp_file.json.gz', 'wb') as f:
             f.write(json.dumps(self.docs).encode('utf-8'))
-        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'], 'temp_file.json.gz')
         self.commit()
         queries = 0
         docs = []
-        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'], {'q':'*:*'}, rows = 50, max_start = 502):
+        for res in self.solr.paging_query(test_config['SOLR_COLLECTION'], {'q': '*:*'}, rows=50, max_start=502):
             self.assertTrue(len(res.docs) == 50)
-            queries +=1
+            queries += 1
             docs.extend(res.docs)
         ids = [x['id'] for x in docs]
 
@@ -251,19 +250,18 @@ class ClientTestIndexing(unittest.TestCase):
         except:
             pass
 
-
     def test_cursor_query(self):
         self.docs = self.rand_docs.get_docs(2000)
-        with gzip.open('temp_file.json.gz','wb') as f:
+        with gzip.open('temp_file.json.gz', 'wb') as f:
             f.write(json.dumps(self.docs).encode('utf-8'))
-        r = self.solr.stream_file(test_config['SOLR_COLLECTION'],'temp_file.json.gz')
+        r = self.solr.stream_file(test_config['SOLR_COLLECTION'], 'temp_file.json.gz')
         self.commit()
         queries = 0
         docs = []
 
-        for res in self.solr.cursor_query(test_config['SOLR_COLLECTION'], {'q':'*:*', 'rows':100}):
+        for res in self.solr.cursor_query(test_config['SOLR_COLLECTION'], {'q': '*:*', 'rows': 100}):
             self.assertTrue(len(res.docs) == 100)
-            queries +=1
+            queries += 1
             docs.extend(res.docs)
 
         ids = [x['id'] for x in docs]
@@ -280,5 +278,5 @@ class ClientTestIndexing(unittest.TestCase):
             pass
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     pass
