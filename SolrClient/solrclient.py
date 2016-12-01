@@ -182,10 +182,10 @@ class SolrClient:
                                                     collection=collection,
                                                     params={'id': doc_id},
                                                     **kwargs)
-        doc = resp['doc']
-        if not doc:
-            raise NotFoundError
-        return doc
+        if 'doc' in resp and resp['doc']:
+            return resp['doc']
+        raise NotFoundError
+
 
     def mget(self, collection, doc_ids, **kwargs):
         """
@@ -200,10 +200,12 @@ class SolrClient:
         resp, con_inf = self.transport.send_request(method='GET',
                                                     endpoint='get',
                                                     collection=collection,
-                                                    params={'id': doc_ids},
+                                                    params={'ids': doc_ids},
                                                     **kwargs)
-        docs = resp['response']['docs']
-        return docs
+        if 'docs' in resp['response']:
+            return resp['response']['docs']
+        raise NotFoundError
+
 
     def delete_doc_by_id(self, collection, doc_id, **kwargs):
         """

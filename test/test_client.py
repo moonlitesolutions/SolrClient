@@ -102,13 +102,14 @@ class ClientTestIndexing(unittest.TestCase):
         self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps([{'id': doc_id}]))
         # this returns the doc!
         self.solr.get(test_config['SOLR_COLLECTION'], doc_id)
-        try:
+        with self.assertRaises(NotFoundError):
             self.solr.get(test_config['SOLR_COLLECTION'], '5')
-            raise Exception('document 5 exists but shouldnt')
-        except NotFoundError:
-            pass
+
+    def test_mget(self):
+        self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps([{'id': '1'}]))
+        self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps([{'id': '5'}]))
         docs = self.solr.mget(test_config['SOLR_COLLECTION'], ('5', '1'))
-        assert len(docs) > 0
+        self.assertEqual(len(docs), 2)
 
     def test_indexing_conn_log(self):
         self.docs = self.rand_docs.get_docs(53)
