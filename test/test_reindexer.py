@@ -207,12 +207,11 @@ class ReindexerTests(unittest.TestCase):
         reindexer = Reindexer(source=solr, source_coll='source_coll',
                               dest=solr, dest_coll='dest_coll',
                               date_field='index_date')
-        reindexer.reindex()
 
         try:
-            self.assertTrue(solr.transport._action_log[1]['params']['params']['sort'] == 'index_date asc, id desc')
-        except KeyError:
-            self.assertTrue(solr.transport._action_log[2]['params']['params']['sort'] == 'index_date asc, id desc')
+            self.assertTrue(solr.transport._action_log[1]['params']['data']['sort'] == 'index_date asc, id desc')
+        except:
+            self.assertTrue(solr.transport._action_log[2]['params']['data']['sort'] == 'index_date asc, id desc')
         self.assertEqual(
             solr.query(self.colls[0], {'q': '*:*', 'rows': 10000000}).docs.sort(key=lambda x: x['id']),
             solr.query(self.colls[1], {'q': '*:*', 'rows': 10000000}).docs.sort(key=lambda x: x['id']),
