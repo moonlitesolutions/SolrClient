@@ -202,10 +202,13 @@ class ReindexerTests(unittest.TestCase):
 
     def test_solr_to_solr_with_date(self):
         self._index_docs(50000, self.colls[0])
-        solr = SolrClient(test_config['SOLR_SERVER'][0], devel=True, auth=test_config['SOLR_CREDENTIALS'])
-        reindexer = Reindexer(source=solr, source_coll='source_coll', dest=solr, dest_coll='dest_coll',
+        solr = SolrClient(test_config['SOLR_SERVER'][0], devel=True,
+                          auth=test_config['SOLR_CREDENTIALS'])
+        reindexer = Reindexer(source=solr, source_coll='source_coll',
+                              dest=solr, dest_coll='dest_coll',
                               date_field='index_date')
         reindexer.reindex()
+
         try:
             self.assertTrue(solr.transport._action_log[1]['params']['params']['sort'] == 'index_date asc, id desc')
         except KeyError:
