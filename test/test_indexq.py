@@ -12,7 +12,7 @@ from .RandomTestData import RandomTestData
 import shutil
 from functools import partial
 from datetime import datetime as dt
-
+from time import sleep
 test_config['indexqbase'] = os.getcwd()
 
 logging.disable(logging.CRITICAL)
@@ -205,6 +205,7 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs, indexdocs)
@@ -219,6 +220,7 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq', mode='out')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs, indexdocs)
@@ -233,6 +235,7 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq', mode='out')
         indexdocs = index.get_all_as_list()
         self.assertEqual(docs, indexdocs)
@@ -247,6 +250,7 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = []
         for x in index.get_todo_items():
@@ -266,6 +270,7 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(rdocs, finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq')
         indexdocs = []
         for x in index.get_todo_items():
@@ -282,6 +287,7 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq', compress=False)
         indexdocs = []
         for x in index.get_todo_items():
@@ -306,6 +312,7 @@ class TestIndexQ(unittest.TestCase):
         for _ in range(files):
             doc = index.add(self.docs, finalize=True)
             docs.append(doc)
+            sleep(1)
         index = IndexQ(test_config['indexqbase'], 'testq', mode='out', devel=True)
         x = index.get_todo_items()
         self.assertTrue(os.path.exists(index._lck))
