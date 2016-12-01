@@ -3,10 +3,7 @@ import logging
 from SolrClient import SolrClient
 from SolrClient.exceptions import *
 from .test_config import test_config
-<<<<<<< HEAD
 from .RandomTestData import RandomTestData
-=======
->>>>>>> d3ab007dea8cf3724117320557b82c44f2b09db0
 import random
 
 # logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
@@ -24,18 +21,8 @@ class test_collections(unittest.TestCase):
 
     def test_create_collection(self):
         temp = test_config['SOLR_COLLECTION'] + str(random.random() * 100)
-<<<<<<< HEAD
         params = {'replicationFactor': 1, 'collection.configName': 'basic_configs'}
         res, con_info = self.solr.collections.create(temp, 1, params=params)
-=======
-
-        res, con_info = self.solr.collections.api('create', {
-            'name': temp,
-            'numShards': 1,
-            'replicationFactor': 1,
-            'collection.configName': 'basic_configs'
-        })
->>>>>>> d3ab007dea8cf3724117320557b82c44f2b09db0
         self.assertTrue('success' in res)
         # also test exists()
         self.assertTrue(self.solr.collections.exists(temp))
