@@ -3,6 +3,7 @@ import os
 import json
 import logging
 from .transport import TransportRequests
+from .exceptions import NotFoundError
 from .schema import Schema
 from .solrresp import SolrResponse
 from .collections import Collections
@@ -61,6 +62,32 @@ class SolrClient:
             raise
         self.logger.debug("Commit Successful, QTime is {}".format(resp['responseHeader']['QTime']))
 
+    def query_raw(self, collection, query, request_handler='select', **kwargs):
+        """
+        :param str collection: The name of the collection for the request
+        :param str request_handler: Request handler, default is 'select'
+        :param dict query: Python dictionary of Solr query parameters.
+
+        Sends a query to Solr, returns a dict. `query` should be a dictionary of solr request handler arguments.
+        Example::
+
+            res = solr.query_raw('SolrClient_unittest',{
+                'q':'*:*',
+                'facet':True,
+                'facet.field':'facet_test',
+            })
+
+        """
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        data = query
+        resp, con_inf = self.transport.send_request(method='POST',
+                                                    endpoint=request_handler,
+                                                    collection=collection,
+                                                    data=data,
+                                                    headers=headers,
+                                                    **kwargs)
+        return resp
+
     def query(self, collection, query, request_handler='select', **kwargs):
         """
         :param str collection: The name of the collection for the request
@@ -84,20 +111,10 @@ class SolrClient:
                 elif type(query[field]) is list:
                     query[field] = [s.replace(' ', '') for s in query[field]]
 
-        # If the query is long, use POST instead of GET. Estimate query string
-        # length by converting the query dict to a string since at this point
-        # we don't have a urlencoded query yet.
-        if len(str(query)) > 1000:
-            method = 'POST'
-            headers = {'content-type': 'application/x-www-form-urlencoded'}
-            params = {}
-            data = query
-        else:
-            method = 'GET'
-            headers = None
-            params = query
-            data = {}
-
+        method = 'POST'
+        headers = {'content-type': 'application/x-www-form-urlencoded'}
+        params = {}
+        data = query
         resp, con_inf = self.transport.send_request(method=method,
                                                     endpoint=request_handler,
                                                     collection=collection,
@@ -105,13 +122,26 @@ class SolrClient:
                                                     data=data,
                                                     headers=headers,
                                                     **kwargs)
-
         if resp:
             resp = SolrResponse(resp)
             resp.url = con_inf['url']
             return resp
 
-    def index_json(self, collection, data, params={}, **kwargs):
+    def index(self, collection, docs, params=None, **kwargs):
+        """
+        :param str collection: The name of the collection for the request.
+        :param docs list docs: List of dicts. ex: [{"title": "testing solr indexing", "id": "test1"}]
+
+        Sends supplied list of dicts to solr for indexing.  ::
+
+            >>> docs = [{'id':'changeme','field1':'value1'}, {'id':'changeme1','field2':'value2'}]
+            >>> solr.index('SolrClient_unittest', docs)
+
+        """
+        data = json.dumps(docs)
+        return self.index(collection, data, params, **kwargs)
+
+    def index_json(self, collection, data, params=None, **kwargs):
         """
         :param str collection: The name of the collection for the request.
         :param data str data: Valid Solr JSON as a string. ex: '[{"title": "testing solr indexing", "id": "test1"}]'
@@ -123,6 +153,8 @@ class SolrClient:
             >>> solr.index_json('SolrClient_unittest',json.dumps(docs))
 
         """
+        if params is None:
+            params = {}
 
         resp, con_inf = self.transport.send_request(method='POST',
                                                     endpoint='update',
@@ -133,8 +165,7 @@ class SolrClient:
 
         if resp['responseHeader']['status'] == 0:
             return True
-        else:
-            return False
+        return False
 
     def get(self, collection, doc_id, **kwargs):
         """
@@ -155,6 +186,24 @@ class SolrClient:
         if not doc:
             raise NotFoundError
         return doc
+
+    def mget(self, collection, doc_ids, **kwargs):
+        """
+        :param str collection: The name of the collection for the request
+        :param tuple doc_ids: ID of the document to be retrieved.
+
+        Retrieve documents from Solr based on the ID. ::
+
+            >>> solr.get('SolrClient_unittest','changeme')
+        """
+
+        resp, con_inf = self.transport.send_request(method='GET',
+                                                    endpoint='get',
+                                                    collection=collection,
+                                                    params={'id': doc_ids},
+                                                    **kwargs)
+        docs = resp['response']['docs']
+        return docs
 
     def delete_doc_by_id(self, collection, doc_id, **kwargs):
         """
