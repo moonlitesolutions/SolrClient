@@ -12,18 +12,18 @@ from SolrClient import SolrClient, IndexQ
 
 class Reindexer():
     '''
-    Initiates the re-indexer. 
-    
+    Initiates the re-indexer.
+
     :param source: An instance of SolrClient.
-    :param dest: An instance of SolrClient or an instance of IndexQ. 
-    :param string source_coll: Source collection name. 
-    :param string dest_coll: Destination collection name; only required if destination is SolrClient. 
-    :param int rows: Number of items to get in each query; default is 1000, however you will probably want to increase it. 
-    :param string date_field: String name of a Solr date field to use in sort and resume. 
-    :param bool devel: Whenever to turn on super verbouse logging for development. Standard DEBUG should suffice for most developemnt. 
-    :param bool per_shard: Will add distrib=false to each query to get the data. Use this only if you will be running multiple instances of this to get the rest of the shards. 
-    :param list ignore_fields: What fields to exclude from Solr queries. This is important since if you pull them out, you won't be able to index the documents in. 
-    By default, it will try to determine and exclude copy fields as well as _version_. Pass in your own list to override or set it to False to prevent it from doing anything. 
+    :param dest: An instance of SolrClient or an instance of IndexQ.
+    :param string source_coll: Source collection name.
+    :param string dest_coll: Destination collection name; only required if destination is SolrClient.
+    :param int rows: Number of items to get in each query; default is 1000, however you will probably want to increase it.
+    :param string date_field: String name of a Solr date field to use in sort and resume.
+    :param bool devel: Whenever to turn on super verbouse logging for development. Standard DEBUG should suffice for most developemnt.
+    :param bool per_shard: Will add distrib=false to each query to get the data. Use this only if you will be running multiple instances of this to get the rest of the shards.
+    :param list ignore_fields: What fields to exclude from Solr queries. This is important since if you pull them out, you won't be able to index the documents in.
+    By default, it will try to determine and exclude copy fields as well as _version_. Pass in your own list to override or set it to False to prevent it from doing anything.
     '''
     def __init__(self,
                 source,
@@ -39,11 +39,11 @@ class Reindexer():
 
 
         self.log = logging.getLogger('reindexer')
-        
+
         self._source = source
         self._source_coll = source_coll
         self._dest = dest
-        self._dest_coll = dest_coll      
+        self._dest_coll = dest_coll
         self._rows = rows
         self._date_field = date_field
         self._per_shard = per_shard
@@ -64,7 +64,7 @@ class Reindexer():
         else:
             raise ValueError("Incorrect Source Specified. Pass either a directory with json files or source SolrClient \
                             instance with the name of the collection.")
-        
+
         if type(self._dest) is SolrClient and self._dest_coll:
             self._putter = self._to_solr
         elif type(dest) is IndexQ:
@@ -86,10 +86,10 @@ class Reindexer():
 
     def reindex(self, fq= [], **kwargs):
         '''
-        Starts Reindexing Process. All parameter arguments will be passed down to the getter function. 
-        :param string fq: FilterQuery to pass to source Solr to retrieve items. This can be used to limit the results. 
+        Starts Reindexing Process. All parameter arguments will be passed down to the getter function.
+        :param string fq: FilterQuery to pass to source Solr to retrieve items. This can be used to limit the results.
         '''
-        for items in self._getter(fq= fq, **kwargs):
+        for items in self._getter(fq=fq, **kwargs):
             self._putter(items)
         if type(self._dest) is SolrClient and self._dest_coll:
             self.log.info("Finished Indexing, sending a commit")
@@ -98,7 +98,7 @@ class Reindexer():
 
     def _from_solr(self, fq=[], report_frequency = 25):
         '''
-        Method for retrieving batch data from Solr. 
+        Method for retrieving batch data from Solr.
         '''
         cursor = '*'
         stime = datetime.now()
@@ -106,8 +106,9 @@ class Reindexer():
         while True:
             #Get data with starting cursorMark
             query = self._get_query(cursor)
-            #Add FQ to the query. This is used by resume to filter on date fields and when specifying document subset. 
-            #Not included in _get_query for more flexibiilty. 
+            #Add FQ to the query. This is used by resume to filter on date fields and when specifying document subset.
+            #Not included in _get_query for more flexibiilty.
+
             if fq:
                 if 'fq' in query:
                     [query['fq'].append(x) for x in fq]
@@ -118,7 +119,7 @@ class Reindexer():
             query_count += 1
             if query_count % report_frequency == 0:
                 self.log.info("Processed {} Items in {} Seconds. Apprximately {} items/minute".format(
-                            self._items_processed, int((datetime.now()-stime).seconds), 
+                            self._items_processed, int((datetime.now()-stime).seconds),
                             str(int(self._items_processed / ((datetime.now()-stime).seconds/60)))
                             ))
 
@@ -140,7 +141,7 @@ class Reindexer():
 
     def _trim_fields(self, docs):
         '''
-        Removes ignore fields from the data that we got from Solr. 
+        Removes ignore fields from the data that we got from Solr.
         '''
         for doc in docs:
             for field in self._ignore_fields:
@@ -151,14 +152,14 @@ class Reindexer():
 
     def _get_query(self, cursor):
         '''
-        Query tempalte for source Solr, sorts by id by default. 
+        Query tempalte for source Solr, sorts by id by default.
         '''
         query = {'q':'*:*',
                 'sort':'id desc',
                 'rows':self._rows,
                 'cursorMark':cursor}
         if self._date_field:
-            query['sort'] = "{} asc, id desc".format(self._date_field)   
+            query['sort'] = "{} asc, id desc".format(self._date_field)
         if self._per_shard:
             query['distrib'] = 'false'
         return query
@@ -166,23 +167,23 @@ class Reindexer():
 
     def _to_IndexQ(self, data):
         '''
-        Sends data to IndexQ instance. 
+        Sends data to IndexQ instance.
         '''
         self._dest.add(data)
 
 
     def _to_solr(self, data):
         '''
-        Sends data to a Solr instance. 
+        Sends data to a Solr instance.
         '''
         return self._dest.index_json(self._dest_coll, json.dumps(data,sort_keys=True))
 
 
     def _get_date_range_query(self, start_date, end_date, timespan= 'DAY', date_field= None):
         '''
-        Gets counts of items per specified date range. 
-        :param collection: Solr Collection to use. 
-        :param timespan: Solr Date Math compliant value for faceting ex HOUR, MONTH, DAY 
+        Gets counts of items per specified date range.
+        :param collection: Solr Collection to use.
+        :param timespan: Solr Date Math compliant value for faceting ex HOUR, MONTH, DAY
         '''
         if date_field is None:
             date_field = self._date_field
@@ -213,12 +214,12 @@ class Reindexer():
 
     def _get_date_facet_counts(self, timespan, date_field, start_date=None, end_date=None):
         '''
-        Returns Range Facet counts based on 
+        Returns Range Facet counts based on
         '''
         if 'DAY' not in timespan:
             raise ValueError("At this time, only DAY date range increment is supported. Aborting..... ")
 
-        #Need to do this a bit better later. Don't like the string and date concatenations. 
+        #Need to do this a bit better later. Don't like the string and date concatenations.
         if not start_date:
             start_date = self._get_edge_date(date_field, 'asc')
             start_date = datetime.strptime(start_date,'%Y-%m-%dT%H:%M:%S.%fZ').date().isoformat()+'T00:00:00.000Z'
@@ -237,7 +238,7 @@ class Reindexer():
         self.log.info("Processing Items from {} to {}".format(start_date, end_date))
 
         #Get facet counts for source and destination collections
-        source_facet = self._source.query(self._source_coll, 
+        source_facet = self._source.query(self._source_coll,
             self._get_date_range_query(timespan=timespan, start_date=start_date, end_date=end_date)
             ).get_facets_ranges()[date_field]
         dest_facet = self._dest.query(
@@ -253,19 +254,19 @@ class Reindexer():
         * You have a date field that you can facet on
         * Indexing was stopped for the duration of the copy
 
-        The way this tries to resume re-indexing is by running a date range facet on the source and destination collections. It then compares 
+        The way this tries to resume re-indexing is by running a date range facet on the source and destination collections. It then compares
         the counts in both collections for each timespan specified. If the counts are different, it will re-index items for each range where
         the counts are off. You can also pass in a start_date to only get items after a certain time period. Note that each date range will be indexed in
-        it's entirety, even if there is only one item missing. 
+        it's entirety, even if there is only one item missing.
 
-        Keep in mind this only checks the counts and not actual data. So make the indexes weren't modified between the reindexing execution and 
+        Keep in mind this only checks the counts and not actual data. So make the indexes weren't modified between the reindexing execution and
         running the resume operation.
 
         :param start_date: Date to start indexing from. If not specified there will be no restrictions and all data will be processed. Note that
-        this value will be passed to Solr directly and not modified. 
+        this value will be passed to Solr directly and not modified.
         :param end_date: The date to index items up to. Solr Date Math compliant value for faceting; currenlty only DAY is supported.
         :param timespan: Solr Date Math compliant value for faceting; currenlty only DAY is supported.
-        :param check: If set to True it will only log differences between the two collections without actually modifying the destination. 
+        :param check: If set to True it will only log differences between the two collections without actually modifying the destination.
         '''
 
         if type(self._source) is not SolrClient or type(self._dest) is not SolrClient:
