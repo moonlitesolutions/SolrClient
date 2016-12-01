@@ -64,7 +64,7 @@ class TransportBase():
     @_retry
     def send_request(self, host, **kwargs):
         if self._devel:
-            self._action_log.append({'host': host, 'params': dict(**kwargs)})
+            self._add_to_action({'host': host, 'params': dict(**kwargs)})
         res_dict, c_inf = self._send(host, **kwargs)
         if 'errors' in res_dict:
             error = ", ".join([x for x in res_dict['errors'][0]['errorMessages']])
