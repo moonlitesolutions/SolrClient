@@ -19,7 +19,7 @@ class TransportRequests(TransportBase):
         if not req:
             raise ImportError("Requests Module not found. Please install it before using this transport")
         self.session = requests.session()
-        if self.auth:
+        if self.auth and self.auth != (None, None):
             self.session.auth = (self.auth[0], self.auth[1])
 
     def _send(self, host, method='GET', **kwargs):
