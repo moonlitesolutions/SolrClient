@@ -207,7 +207,7 @@ class ReindexerTests(unittest.TestCase):
         reindexer = Reindexer(source=solr, source_coll='source_coll',
                               dest=solr, dest_coll='dest_coll',
                               date_field='index_date')
-
+        reindexer.reindex()
         try:
             self.assertTrue(solr.transport._action_log[1]['params']['data']['sort'] == 'index_date asc, id desc')
         except:
