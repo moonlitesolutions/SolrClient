@@ -117,8 +117,8 @@ class SolrClient(object):
 
         method = 'POST'
         headers = {'content-type': 'application/x-www-form-urlencoded'}
-        params = {}
-        data = query
+        params = query
+        data = {}
         resp, con_inf = self.transport.send_request(method=method,
                                                     endpoint=request_handler,
                                                     collection=collection,
