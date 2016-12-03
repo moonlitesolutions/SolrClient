@@ -48,6 +48,7 @@ class TransportBase():
         '''
 
         def inner(self, **kwargs):
+            last_exception = None
             for host in self.HOST_CONNECTIONS:
                 try:
                     return function(self, host, **kwargs)
@@ -59,6 +60,10 @@ class TransportBase():
                     self.logger.exception(e)
                     if '401' in e.__str__():
                         raise
+                    last_exception = e
+            # raise the last exception after contacting all hosts instead of returning None
+            if last_exception is not None:
+                raise last_exception
         return inner
 
     @_retry
