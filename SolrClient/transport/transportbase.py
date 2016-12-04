@@ -56,8 +56,7 @@ class TransportBase():
                     self.logger.exception(e)
                     raise
                 except ConnectionError as e:
-                    self.logger.error("Tried connecting to Solr, but couldn't because of the following exception.")
-                    self.logger.exception(e)
+                    self.logger.exception("Tried connecting to Solr, but couldn't because of the following exception.")
                     if '401' in e.__str__():
                         raise
                     last_exception = e
