@@ -6,7 +6,6 @@
     <field name="_version_" type="long" indexed="false" stored="false"/>
     <field name="_root_" type="string" indexed="true" stored="false"/>
 
-    <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
     <field name="test1" type="string" indexed="true" stored="true"  multiValued="false" />
     <field name="test1_exact" type="string" indexed="true" stored="true"  multiValued="false" />
     <field name="product_name" type="string" indexed="true" stored="true"  multiValued="false" />
