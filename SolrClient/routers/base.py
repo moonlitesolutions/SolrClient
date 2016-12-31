@@ -2,7 +2,7 @@ import random
 
 
 class BaseRouter(object):
-    def __init__(self, solr, hosts):
+    def __init__(self, solr, hosts, **kwargs):
         self.solr = solr
         self.hosts = self._proc_host(hosts)
 
