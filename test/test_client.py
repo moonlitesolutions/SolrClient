@@ -48,11 +48,8 @@ class ClientTestIndexing(unittest.TestCase):
     def test_down_solr_exception(self):
         # connect to "down" sorl host
         s = SolrClient('http://localhost:8999/solr', devel=True)
-        try:
-            s.query('test', {}) # making dumb query
-            raise Exception("If solr is down it should error. Either solr isn't down or code is broken.")
-        except ConnectionError:
-            pass
+        with self.assertRaises(ConnectionError):
+            s.query('test', {})
 
     def test_delete_doc_by_id_with_space(self):
         self.delete_docs()
