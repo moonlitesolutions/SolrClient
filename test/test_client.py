@@ -45,6 +45,12 @@ class ClientTestIndexing(unittest.TestCase):
         # softCommit because we don't care about data on disk
         self.solr.commit(test_config['SOLR_COLLECTION'], openSearcher=True, softCommit=True)
 
+    def test_down_solr_exception(self):
+        # connect to "down" sorl host
+        s = SolrClient('http://localhost:8999/solr', devel=True)
+        with self.assertRaises(ConnectionError):
+            s.query('test', {})
+
     def test_delete_doc_by_id_with_space(self):
         self.delete_docs()
         self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps(

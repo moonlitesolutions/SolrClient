@@ -1,3 +1,4 @@
+
 import unittest
 import logging
 import json
@@ -9,7 +10,7 @@ from .test_config import test_config
 from .RandomTestData import RandomTestData
 
 test_config['indexqbase'] = os.getcwd()
-# logging.basicConfig(level=logging.INFO,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+#logging.basicConfig(level=logging.INFO,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 logging.disable(logging.CRITICAL)
 
 
@@ -208,10 +209,11 @@ class ReindexerTests(unittest.TestCase):
                               dest=solr, dest_coll='dest_coll',
                               date_field='index_date')
         reindexer.reindex()
+
         try:
-            self.assertTrue(solr.transport._action_log[1]['params']['data']['sort'] == 'index_date asc, id desc')
+            self.assertTrue(solr.transport._action_log[1]['params']['params']['sort'] == 'index_date asc, id desc')
         except:
-            self.assertTrue(solr.transport._action_log[2]['params']['data']['sort'] == 'index_date asc, id desc')
+            self.assertTrue(solr.transport._action_log[2]['params']['params']['sort'] == 'index_date asc, id desc')
         self.assertEqual(
             solr.query(self.colls[0], {'q': '*:*', 'rows': 10000000}).docs.sort(key=lambda x: x['id']),
             solr.query(self.colls[1], {'q': '*:*', 'rows': 10000000}).docs.sort(key=lambda x: x['id']),
