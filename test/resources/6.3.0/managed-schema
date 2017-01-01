@@ -15,7 +15,10 @@
     <field name="index_date" type="date" default="NOW" indexed="true" stored="true"  multiValued="false" />
     <field name="date" type="date" indexed="true" stored="true"  multiValued="false" />
     <field name="_text_" type="text_general" indexed="true" stored="false" multiValued="true"/>
-
+	
+	<copyField source="test1" dest="test1_exact"/>
+    <copyField source="product_name" dest="product_name_exact"/>
+	
     <!-- Only enabled in the "schemaless" data-driven example (assuming the client
          does not know what fields may be searched) because it's very expensive to index everything twice. -->
     <!-- <copyField source="*" dest="_text_"/> -->
