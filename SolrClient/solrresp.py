@@ -6,7 +6,7 @@ class SolrResponse:
         self.data = data
         self.query_time = data['responseHeader']['QTime']
         self.header = data['responseHeader']
-        
+
         if 'response' in data:
             self.grouped = False
             self.docs = data['response']['docs']
@@ -23,15 +23,11 @@ class SolrResponse:
             self.grouped = False
             self.docs = {}
         
-        for doc in self.docs:
-            for field in doc:
-                if type(doc[field]) == str and doc[field].isdigit():
-                    doc[field] = int(doc[field])
-                    
+
     def get_num_found(self):
         '''
         Returns number of documents found on an ungrounded query. ::
-        
+
             >>> res = solr.query('SolrClient_unittest',{
                     'q':'*:*',
                     'facet':True,
@@ -39,14 +35,14 @@ class SolrResponse:
             })
             >>> res.get_num_found()
             50
-            
+
         '''
         return self.num_found
-        
+
     def get_results_count(self):
         '''
         Returns the number of documents returned in current query. ::
-            
+
             >>> res = solr.query('SolrClient_unittest',{
                 'q':'*:*',
                 'facet':True,
@@ -57,15 +53,15 @@ class SolrResponse:
             10
             >>> res.get_num_found()
             50
-        
+
         '''
-    
+
         return len(self.docs)
-    
+
     def get_facets(self):
         '''
         Returns a dictionary of facets::
-        
+
             >>> res = solr.query('SolrClient_unittest',{
                     'q':'product_name:Lorem',
                     'facet':True,
@@ -75,7 +71,7 @@ class SolrResponse:
             4
             >>> res.get_facets()
             {'facet_test': {'ipsum': 0, 'sit': 0, 'dolor': 2, 'amet,': 1, 'Lorem': 1}}
-            
+
         '''
         if not hasattr(self,'facets'):
             self.facets = {}
@@ -91,20 +87,20 @@ class SolrResponse:
                 raise SolrResponseError("No Facet Information in the Response")
         else:
             return self.facets
-    
+
     def get_cursor(self):
         '''
-        If you asked for the cursor in your query, this will return the next cursor mark. 
+        If you asked for the cursor in your query, this will return the next cursor mark.
         '''
         if 'nextCursorMark' in self.data:
             return self.data['nextCursorMark']
         else:
             raise SolrResponseError("No Cursor Mark in the Response")
-    
+
     def get_facets_ranges(self):
         '''
         Returns query facet ranges ::
-        
+
             >>> res = solr.query('SolrClient_unittest',{
                 'q':'*:*',
                 'facet':True,
@@ -131,8 +127,8 @@ class SolrResponse:
                 raise SolrResponseError("No Facet Ranges in the Response")
         else:
             return self.facet_ranges
-    
-    
+
+
     def get_facet_pivot(self):
         '''
         Parses facet pivot response. Example::
@@ -144,8 +140,8 @@ class SolrResponse:
             })
             >>> res.get_facet_pivot()
             {'facet_test,price': {'Lorem': {89: 1, 75: 1}, 'ipsum': {53: 1, 70: 1, 55: 1, 89: 1, 74: 1, 93: 1, 79: 1}, 'dolor': {61: 1, 94: 1}, 'sit': {99: 1, 50: 1, 67: 1, 52: 1, 54: 1, 71: 1, 72: 1, 84: 1, 62: 1}, 'amet,': {68: 1}}}
-        
-        This method has built in recursion and can support indefinite number of facets. However, note that the output format is significantly massaged since Solr by default outputs a list of fields in each pivot field. 
+
+        This method has built in recursion and can support indefinite number of facets. However, note that the output format is significantly massaged since Solr by default outputs a list of fields in each pivot field.
         '''
         if not hasattr(self,'facet_pivot'):
             self.facet_pivot = {}
@@ -155,11 +151,11 @@ class SolrResponse:
                     self.facet_pivot[fieldset] = {}
                     for sub_field_set in pivots[fieldset]:
                         res = self._rec_subfield(sub_field_set)
-                        self.facet_pivot[fieldset].update(res) 
+                        self.facet_pivot[fieldset].update(res)
                 return self.facet_pivot
         else:
             return self.facet_pivot
-        
+
     def _rec_subfield(self,sub_field_set):
         out = {}
         if type(sub_field_set) is list:
@@ -172,18 +168,18 @@ class SolrResponse:
             if 'pivot' in sub_field_set:
                 out[sub_field_set['value']] = self._rec_subfield(sub_field_set['pivot'])
         return out
-            
+
     def get_field_values_as_list(self,field):
         '''
-        :param str field: The name of the field for which to pull in values. 
+        :param str field: The name of the field for which to pull in values.
         Will parse the query results (must be ungrouped) and return all values of 'field' as a list. Note that these are not unique values.  Example::
-        
+
             >>> r.get_field_values_as_list('product_name_exact')
             ['Mauris risus risus lacus. sit', 'dolor auctor Vivamus fringilla. vulputate', 'semper nisi lacus nulla sed', 'vel amet diam sed posuere', 'vitae neque ultricies, Phasellus ac', 'consectetur nisi orci, eu diam', 'sapien, nisi accumsan accumsan In', 'ligula. odio ipsum sit vel', 'tempus orci. elit, Ut nisl.', 'neque nisi Integer nisi Lorem']
 
         '''
         return [doc[field] for doc in self.docs if field in doc]
-    
+
     #Not Sure what this one is doing or why I wrote it
     #Will find out later when migrating the rest of the code
     '''
@@ -193,8 +189,8 @@ class SolrResponse:
             if field[0] in doc.keys() and field[1] in doc.keys():
                 out[doc[field[0]]] = doc[field[1]]
         return out
-        
-    #Not Sure what this one is doing or why I wrote it   
+
+    #Not Sure what this one is doing or why I wrote it
     def get_fields_as_list(self,field):
         out = []
         for doc in self.docs:
@@ -207,7 +203,7 @@ class SolrResponse:
             if len(t)> 0:
                 out.append(t)
         return out
-    
+
     #Not Sure what this one is doing or why I wrote it
     def get_multi_fields_as_dict(self,fields):
         out = {}
@@ -219,25 +215,25 @@ class SolrResponse:
                         out[doc[fields[0]]][field] = doc[field]
         return out
     '''
-    
-    
+
+
     def get_first_field_values_as_list(self,field):
         '''
-        :param str field: The name of the field for lookup. 
-        
-        Goes through all documents returned looking for specified field. At first encounter will return the field's value. 
+        :param str field: The name of the field for lookup.
+
+        Goes through all documents returned looking for specified field. At first encounter will return the field's value.
         '''
         for doc in self.docs:
             if field in doc.keys():
                 return doc[field]
         raise SolrResponseError("No field in result set")
-        
+
     def get_facet_values_as_list(self,field):
         '''
         :param str field: Name of facet field to retrieve values from.
-        
+
         Returns facet values as list for a given field. Example::
-        
+
             >>> res = solr.query('SolrClient_unittest',{
                 'q':'*:*',
                 'facet':'true',
@@ -247,7 +243,7 @@ class SolrResponse:
             [9, 6, 14, 10, 11]
             >>> res.get_facets()
             {'facet_test': {'Lorem': 9, 'ipsum': 6, 'amet,': 14, 'dolor': 10, 'sit': 11}}
-            
+
         '''
         facets = self.get_facets()
         out = []
@@ -257,14 +253,14 @@ class SolrResponse:
             return out
         else:
             raise SolrResponseError("No field in facet output")
-            
+
     def get_facet_keys_as_list(self,field):
         '''
         :param str field: Name of facet field to retrieve keys from.
-        
-        Similar to get_facet_values_as_list but returns the list of keys as a list instead. 
+
+        Similar to get_facet_values_as_list but returns the list of keys as a list instead.
         Example::
-        
+
             >>> r.get_facet_keys_as_list('facet_test')
             ['Lorem', 'ipsum', 'amet,', 'dolor', 'sit']
 
@@ -274,9 +270,9 @@ class SolrResponse:
             return facets
         if field in facets.keys():
             return [x for x in facets[field]]
-            
+
     def get_json(self):
         '''
-        Returns json from the original response. 
+        Returns json from the original response.
         '''
         return json.dumps(self.data)
