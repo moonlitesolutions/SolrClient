@@ -2,6 +2,7 @@ import gzip
 import os
 import json
 import logging
+from .routers.plain import PlainRouter
 from .transport import TransportRequests
 from .exceptions import NotFoundError
 from .schema import Schema
@@ -10,7 +11,7 @@ from .collections import Collections
 from .zk import ZK
 
 
-class SolrClient:
+class SolrClient(object):
     """
     Creates a new SolrClient.
 
@@ -24,13 +25,16 @@ class SolrClient:
                  transport=TransportRequests,
                  devel=False,
                  auth=None,
-                 log=None):
+                 log=None,
+                 router=PlainRouter,
+                 **kwargs):
         self.devel = devel
         self.host = host
-        self.transport = transport(self, host=host, auth=auth, devel=devel)
+        self.transport = transport(self, auth=auth, devel=devel)
         self.logger = log if log else logging.getLogger(__package__)
         self.schema = Schema(self)
         self.collections = Collections(self, self.logger)
+        self.router = router(self, host, **kwargs)
 
     def get_zk(self):
         return ZK(self, self.logger)

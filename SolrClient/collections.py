@@ -48,7 +48,7 @@ class Collections():
 
         """
 
-        res, con_info = self.api('clusterstatus')
+        res = self.cluster_status_raw()
 
         cluster = res['cluster']['collections']
         out = {}
@@ -69,6 +69,14 @@ class Collections():
             self.logger.exception(e)
 
         return out
+
+    def cluster_status_raw(self, **kwargs):
+        """
+        Returns raw output of the clusterstatus api command.
+
+        """
+        res, con_info = self.api('clusterstatus', **kwargs)
+        return res
 
     def exists(self, collection):
         """
