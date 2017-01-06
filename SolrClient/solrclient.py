@@ -143,7 +143,7 @@ class SolrClient(object):
 
         """
         data = json.dumps(docs)
-        return self.index(collection, data, params, **kwargs)
+        return self.index_json(collection, data, params, **kwargs)
 
     def index_json(self, collection, data, params=None, **kwargs):
         """
