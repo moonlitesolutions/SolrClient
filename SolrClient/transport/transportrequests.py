@@ -30,8 +30,6 @@ class TransportRequests(TransportBase):
         for field in params:
             if type(params[field]) is bool:
                 params[field] = str(params[field]).lower()
-        if not host.endswith('/'):
-            host += '/'
         data = kwargs['data'] if 'data' in kwargs else {}
         if 'endpoint' not in kwargs:
             raise ValueError("No URL 'endpoint' set in parameters to send_request")
