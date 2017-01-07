@@ -27,7 +27,8 @@ class TransportRequests(TransportBase):
             raise ValueError("No URL 'endpoint' set in parameters to send_request")
         if params is None:
             params = {}
-        params.update(wt='json', indent=False)
+        # put each kwarg into the params, like min_rf, _route_ etc
+        params.update(wt='json', indent=False, **kwargs)
         for field in params:
             if type(params[field]) is bool:
                 params[field] = str(params[field]).lower()
