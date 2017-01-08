@@ -30,7 +30,7 @@ class NotFoundError(SolrError):
 
 class MinRfError(SolrError):
     """
-    When an index requet didn't satisfy the required min_rf
+    When an index request didn't satisfy the required min_rf
     """
     rf = None
     min_rf = None
