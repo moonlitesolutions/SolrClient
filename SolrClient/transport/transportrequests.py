@@ -22,28 +22,25 @@ class TransportRequests(TransportBase):
         if self.auth and self.auth != (None, None):
             self.session.auth = (self.auth[0], self.auth[1])
 
-    def _send(self, host, method='GET', **kwargs):
-        params = kwargs['params'] if 'params' in kwargs else {}
-        if 'wt' not in params:
-            params['wt'] = 'json'
-        params['indent'] = False
+    def _send(self, host, method='GET', endpoint=None, collection=None, params=None, headers=None, data=None, **kwargs):
+        if endpoint is None:
+            raise ValueError("No URL 'endpoint' set in parameters to send_request")
+        if params is None:
+            params = {}
+        # put each kwarg into the params, like min_rf, _route_ etc
+        params.update(wt='json', indent=False, **kwargs)
         for field in params:
             if type(params[field]) is bool:
                 params[field] = str(params[field]).lower()
-        if not host.endswith('/'):
-            host += '/'
-        data = kwargs['data'] if 'data' in kwargs else {}
-        if 'endpoint' not in kwargs:
-            raise ValueError("No URL 'endpoint' set in parameters to send_request")
-
-        if 'collection' in kwargs:
-            url = "{}{}/{}".format(host, kwargs['collection'], kwargs['endpoint'])
+        if collection is not None:
+            url = "{}{}/{}".format(host, collection, endpoint)
         else:
-            url = host + kwargs['endpoint']
-        headers = kwargs.get('headers') or {'content-type': 'application/json'}
+            url = host + endpoint
+        if headers is None:
+            headers = {'content-type': 'application/json'}
 
         self.logger.debug("Sending Request to {} with {}".format(url, ", ".join(
-            [str("{}={}".format(key, params[key])) for key in params])))
+            (str("{}={}".format(key, params[key])) for key in params))))
 
         # Some code used from ES python client.
         start = time.time()

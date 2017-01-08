@@ -103,6 +103,14 @@ class ClientTestIndexing(unittest.TestCase):
         self.delete_docs()
         self.commit()
 
+    def test_index_min_rf(self):
+        # we don't have 200 replicas, so it will always fail to fulfill min_rf
+        with self.assertRaises(MinRfError):
+            self.solr.index(test_config['SOLR_COLLECTION'], [self.docs[0]], min_rf=200)
+        self.commit()
+        self.delete_docs()
+        self.commit()
+
     def test_get(self):
         doc_id = '1'
         self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps([{'id': doc_id}]))
