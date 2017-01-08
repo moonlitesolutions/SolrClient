@@ -111,6 +111,12 @@ class ClientTestIndexing(unittest.TestCase):
             logging.debug("Checking {}".format(doc['id']))
             self.assertEqual(
                 self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
+
+    def test_index_min_rf(self):
+        # we don't have 200 replicas, so it will always fail to fulfill min_rf
+        with self.assertRaises(MinRfError):
+            self.solr.index(test_config['SOLR_COLLECTION'], [self.docs[0]], min_rf=200)
+        self.commit()  # commit because it wrote it on active shards and we need to delete for the next test!
         self.delete_docs()
         self.commit()
 
