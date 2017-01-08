@@ -5,6 +5,7 @@ import json
 import os
 from SolrClient import SolrClient
 from SolrClient.exceptions import *
+from SolrClient.routers.aware import AwareRouter
 from .test_config import test_config
 from .RandomTestData import RandomTestData
 
@@ -14,10 +15,12 @@ logging.disable(logging.CRITICAL)
 
 class ClientTestIndexing(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def get_solr(cls):
+        return SolrClient(test_config['SOLR_SERVER'][0], devel=True, auth=test_config['SOLR_CREDENTIALS'])
 
-        self.solr = SolrClient(test_config['SOLR_SERVER'][0], devel=True,
-                               auth=test_config['SOLR_CREDENTIALS'])
+    @classmethod
+    def setUpClass(self):
+        self.solr = self.get_solr()
         self.rand_docs = RandomTestData()
         self.docs = self.rand_docs.get_docs(50)
 
@@ -110,6 +113,15 @@ class ClientTestIndexing(unittest.TestCase):
         self.commit()
         self.delete_docs()
         self.commit()
+
+    def test_router_aware(self):
+        s = self.get_solr()
+        s.router = AwareRouter(s, s.host)
+        # check shard map get's built without error
+        s.router.refresh_shard_map()
+        # check dumb query to see stuff isn't broken
+        s.query(test_config['SOLR_COLLECTION'], {}, _route_='1', prefer_leader=True)
+        # todo needs something better, to check that the shard selected is the right one based on _route_ key
 
     def test_get(self):
         doc_id = '1'
