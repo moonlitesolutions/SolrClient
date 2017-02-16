@@ -2,7 +2,6 @@ import gzip
 import os
 import json
 import logging
-from .routers.plain import PlainRouter
 from .transport import TransportRequests
 from .exceptions import NotFoundError, MinRfError
 from .schema import Schema
@@ -26,15 +25,12 @@ class SolrClient(object):
                  devel=False,
                  auth=None,
                  log=None,
-                 router=PlainRouter,
                  **kwargs):
         self.devel = devel
-        self.host = host
-        self.transport = transport(self, auth=auth, devel=devel)
+        self.transport = transport(self, auth=auth, devel=devel, host=host, **kwargs)
         self.logger = log if log else logging.getLogger(__package__)
         self.schema = Schema(self)
         self.collections = Collections(self, self.logger)
-        self.router = router(self, host, **kwargs)
 
     def get_zk(self):
         return ZK(self, self.logger)
