@@ -9,7 +9,7 @@ from SolrClient.routers.aware import AwareRouter
 from .test_config import test_config
 from .RandomTestData import RandomTestData
 
-# logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+#logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 logging.disable(logging.CRITICAL)
 
 

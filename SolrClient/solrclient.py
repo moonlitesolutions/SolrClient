@@ -27,6 +27,7 @@ class SolrClient(object):
                  log=None,
                  **kwargs):
         self.devel = devel
+        self.host = host
         self.transport = transport(self, auth=auth, devel=devel, host=host, **kwargs)
         self.logger = log if log else logging.getLogger(__package__)
         self.schema = Schema(self)

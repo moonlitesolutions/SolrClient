@@ -7,7 +7,10 @@ from datetime import datetime
 try:
     import mmh3
 except ImportError:
-    raise ImportError("You need https://pypi.python.org/pypi/mmh3 to use this, friend.")
+    try:
+        from . import pymmh3 as mmh3
+    except:
+        raise ImportError("You need https://pypi.python.org/pypi/mmh3 to use this, friend.")
 
 # always prefer leader in these endpoints since even solr will route to leader itself
 endpoints_prefer_leader = {'update', 'update/json'}
