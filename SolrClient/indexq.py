@@ -14,16 +14,6 @@ from functools import partial
 from SolrClient.exceptions import *
 
 
-def _wrap(method, collection, index, doc):
-    #Indexes entire file into the collection
-    try:
-        res = method(collection, doc)
-        if res:
-            index.complete(doc)
-        return res
-    except SolrError:
-        self.logger.error("Error Indexing Item: {}".format(doc))
-        pass
 
 
 class IndexQ():
@@ -170,6 +160,7 @@ class IndexQ():
                     raise RuntimeError("Couldn't write out the buffer." + _c)
             return _c['size']
         return inner
+
 
 
     #This is about pullind data out
@@ -330,7 +321,7 @@ class IndexQ():
                 method = getattr(solr, 'index_json')
                 method = partial(self._wrap_dynamic, method, collection, )
             else:
-                method = partial(_wrap, method, collection, self)
+                method = partial(self._wrap, method, collection, self)
 
             with ThreadPool(threads) as p:
                 p.map(method, self.get_todo_items())
@@ -345,6 +336,16 @@ class IndexQ():
                     self._unlock()
                     raise
 
+    def _wrap(self, method, collection, doc):
+        #Indexes entire file into the collection
+        try:
+            res = method(collection, doc)
+            if res:
+                self.complete(doc)
+            return res
+        except SolrError:
+            self.logger.error("Error Indexing Item: {}".format(doc))
+            pass
 
     def _wrap_dynamic(self, method, collection, doc):
         # Reads the file, executing 'collection' function on each item to
