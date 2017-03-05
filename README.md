@@ -2,9 +2,9 @@
 [![Documentation Status](https://readthedocs.org/projects/solrclient/badge/?version=latest)](http://solrclient.readthedocs.org/en/latest/?badge=latest)
 
 # SolrClient
-SolrClient 0.1.2
+SolrClient 0.2.0
 ----------
-SolrClient is a simple python library for Solr; built in python3 with support for latest features of Solr 5 and 6. Development is heavily focused on indexing as well as parsing various query responses and returning them in native python data structures. Several helper classes will be built to automate querying and management of Solr clusters. 
+SolrClient is a simple python library for Solr; built in python3 with support for latest features of Solr 5 and 6. Development is heavily focused on indexing as well as parsing various query responses and returning them in native python data structures. Several helper classes will be built to automate querying and management of Solr clusters.
 
 Requirements
 ----------
@@ -26,10 +26,10 @@ Features
 Getting Started
 ----------
 Installation:
-    
+
 	pip install SolrClient
 
-Basic usage: 
+Basic usage:
 
 	>>> from SolrClient import SolrClient
 	>>> solr = SolrClient('http://localhost:8983/solr')
@@ -45,24 +45,22 @@ Basic usage:
 	>>> res.get_facet_keys_as_list('facet_test')
 	['ipsum', 'sit', 'dolor', 'amet,', 'Lorem']
 	>>> res.docs
-	[{'product_name_exact': 'orci. Morbi ipsum 
-	..... all the docs .... 
+	[{'product_name_exact': 'orci. Morbi ipsum
+	..... all the docs ....
 	 'consectetur Mauris dolor Lorem adipiscing'}]
 
-See, easy.... you just need to know the Solr query syntax. 
+See, easy.... you just need to know the Solr query syntax.
 
 
 Roadmap
 ----------
 * Better test coverage
-* Collection Alias Management
-* Collection Re-indexing with cursor mark
-* More Schema API Action Calls
+* Solr Streaming
 
 Contributing
 ----------
-I've realized that that there isn't really a well maintained Solr Python library I liked so I put this together. Contributions (code, tests, documentation) are definitely welcome; if you have a question about development please open up an issue on github page. If you have a pull request, please make sure to add tests and that all of them pass before submitting. See tests README for testing resources. 
+I've realized that that there isn't really a well maintained Solr Python library I liked so I put this together. Contributions (code, tests, documentation) are definitely welcome; if you have a question about development please open up an issue on github page. If you have a pull request, please make sure to add tests and that all of them pass before submitting. See tests README for testing resources.
 
 
-Documentation: 
+Documentation:
 http://solrclient.readthedocs.org/en/latest/

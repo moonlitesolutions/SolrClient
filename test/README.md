@@ -22,6 +22,14 @@ tox is configured to run tests on python 3.2, 3.4 and 3.5, it runs the tests by 
 
 run_tests.sh sets the proper environmental variables and executes all the tests one by one for each listed Solr Version.
 
+To run a single test run something like:
+
+./run_tests.py -py 3.5 -solr 6.3.0 -test test_client.ClientTestIndexing.test_down_solr_exception
+or
+./run_tests.py -py 3.5 -solr 6.3.0 -test test_client
+
+Make sure the version of solr / python you are specified is included in the setup. 
+
 ##To Add a Solr Version
 1. Update ansible/plays/playbook.yml and add the solr version
 2. Create schema.xml in resources/$Version
