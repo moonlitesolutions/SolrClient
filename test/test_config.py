@@ -11,12 +11,16 @@ test_config = {
         'fields':[
             {'name': 'product_name', 'stored': True, 'indexed': True, 'type':'text_en'},
             {'name':'product_name_exact','stored':True,'indexed':True,'type':'string'},
+            {'name':'product_name_s'},
             {'name':'date','stored':True,'indexed':True,'type':'tdate'},
             {'name':'price','stored':True,'indexed':True,'type':'int'},
             {'name':'facet_test','stored':True,'indexed':True,'type':'string'},
+            {'name':'facet_test_s'},
             ],
         'copy_fields': [
-            {'source':'product_name','dest':'product_name_exact'}
+            {'source':'product_name','dest':'product_name_exact'},
+            {'source':'product_name','dest':'product_name_s'},
+            {'source':'facet_test','dest':'facet_test_s'},
         ]},
     'docs': [],
 }

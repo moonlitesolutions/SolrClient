@@ -1,6 +1,6 @@
 import logging
-import random
 from ..exceptions import *
+from ..routers.plain import PlainRouter
 
 
 class TransportBase():
@@ -8,33 +8,17 @@ class TransportBase():
     Base Transport Class
     """
 
-    def __init__(self, solr, host=None, auth=(None, None), devel=None, shuffle_hosts=False):
+    #def __init__(self, solr, auth=(None, None), devel=None, host=None, router=PlainRouter, **kwargs):
+    def __init__(self, solr, auth=(None, None), devel=None, host=None, **kwargs):
         self.logger = logging.getLogger(str(__package__))
-        self.HOST_CONNECTIONS = self._proc_host(host)
-        if shuffle_hosts is True:
-            self.shuffle_hosts()
         self.auth = auth
+        self.host = host if type(host) is list else [host]
         self._devel = devel
         self._action_log = []
         self._action_log_count = 1000
+        self.solr = solr
+        #self.router = router(self, host, **kwargs)
         self.setup()
-
-    def _proc_host(self, host):
-        if type(host) is str:
-            return [host]
-        elif type(host) is list:
-            return host
-        raise Exception("host:%s type: %s is not string or list of strings" % (host, type(host)))
-
-    def shuffle_hosts(self):
-        """
-        Shuffle hosts so we don't always query the first one.
-        Example: using in a webapp with X processes in Y servers, the hosts contacted will be more random.
-        The user can also call this function to reshuffle every 'x' seconds or before every request.
-        :return:
-        """
-        if len(self.HOST_CONNECTIONS) > 1:
-            self.HOST_CONNECTIONS = random.shuffle(self.HOST_CONNECTIONS)
 
     def _add_to_action(self, action):
         self._action_log.append(action)
@@ -42,14 +26,15 @@ class TransportBase():
             self._action_log.pop(0)
 
     def _retry(function):
-        '''
+        """
         Internal mechanism to try to send data to multiple Solr Hosts if
         the query fails on the first one.
-        '''
+        """
 
         def inner(self, **kwargs):
             last_exception = None
-            for host in self.HOST_CONNECTIONS:
+            #for host in self.router.get_hosts(**kwargs):
+            for host in self.host:
                 try:
                     return function(self, host, **kwargs)
                 except SolrError as e:

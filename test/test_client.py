@@ -5,19 +5,22 @@ import json
 import os
 from SolrClient import SolrClient
 from SolrClient.exceptions import *
+from SolrClient.routers.aware import AwareRouter
 from .test_config import test_config
 from .RandomTestData import RandomTestData
 
-# logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
+#logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 logging.disable(logging.CRITICAL)
 
 
 class ClientTestIndexing(unittest.TestCase):
     @classmethod
-    def setUpClass(self):
+    def get_solr(cls):
+        return SolrClient(test_config['SOLR_SERVER'][0], devel=True, auth=test_config['SOLR_CREDENTIALS'])
 
-        self.solr = SolrClient(test_config['SOLR_SERVER'][0], devel=True,
-                               auth=test_config['SOLR_CREDENTIALS'])
+    @classmethod
+    def setUpClass(self):
+        self.solr = self.get_solr()
         self.rand_docs = RandomTestData()
         self.docs = self.rand_docs.get_docs(50)
 
@@ -103,6 +106,32 @@ class ClientTestIndexing(unittest.TestCase):
         self.delete_docs()
         self.commit()
 
+    def test_indexing(self):
+        self.docs = self.rand_docs.get_docs(53)
+        self.solr.index(test_config['SOLR_COLLECTION'], self.docs)
+        self.commit()
+        for doc in self.docs:
+            logging.debug("Checking {}".format(doc['id']))
+            self.assertEqual(
+                self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
+
+    def test_index_min_rf(self):
+        # we don't have 200 replicas, so it will always fail to fulfill min_rf
+        with self.assertRaises(MinRfError):
+            self.solr.index(test_config['SOLR_COLLECTION'], [self.docs[0]], min_rf=200)
+        self.commit()  # commit because it wrote it on active shards and we need to delete for the next test!
+        self.delete_docs()
+        self.commit()
+
+    def test_router_aware(self):
+        s = self.get_solr()
+        s.router = AwareRouter(s, s.host)
+        # check shard map get's built without error
+        s.router.refresh_shard_map()
+        # check dumb query to see stuff isn't broken
+        s.query(test_config['SOLR_COLLECTION'], {}, _route_='1', prefer_leader=True)
+        # todo needs something better, to check that the shard selected is the right one based on _route_ key
+
     def test_get(self):
         doc_id = '1'
         self.solr.index_json(test_config['SOLR_COLLECTION'], json.dumps([{'id': doc_id}]))
@@ -128,6 +157,20 @@ class ClientTestIndexing(unittest.TestCase):
         logging.info(self.solr.transport._action_log)
         self.delete_docs()
         self.commit()
+
+
+    def test_indexing(self):
+        self.docs = self.rand_docs.get_docs(53)
+        self.solr.index(test_config['SOLR_COLLECTION'], self.docs)
+        self.commit()
+        for doc in self.docs:
+            logging.debug("Checking {}".format(doc['id']))
+            self.assertEqual(
+                self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
+        logging.info(self.solr.transport._action_log)
+        self.delete_docs()
+        self.commit()
+
 
     def test_index_json_file(self):
         self.docs = self.rand_docs.get_docs(55)

@@ -3,14 +3,14 @@ import os
 import json
 import logging
 from .transport import TransportRequests
-from .exceptions import NotFoundError
+from .exceptions import NotFoundError, MinRfError
 from .schema import Schema
 from .solrresp import SolrResponse
 from .collections import Collections
 from .zk import ZK
 
 
-class SolrClient:
+class SolrClient(object):
     """
     Creates a new SolrClient.
 
@@ -24,10 +24,11 @@ class SolrClient:
                  transport=TransportRequests,
                  devel=False,
                  auth=None,
-                 log=None):
+                 log=None,
+                 **kwargs):
         self.devel = devel
         self.host = host
-        self.transport = transport(self, host=host, auth=auth, devel=devel)
+        self.transport = transport(self, auth=auth, devel=devel, host=host, **kwargs)
         self.logger = log if log else logging.getLogger(__package__)
         self.schema = Schema(self)
         self.collections = Collections(self, self.logger)
@@ -127,10 +128,11 @@ class SolrClient:
             resp.url = con_inf['url']
             return resp
 
-    def index(self, collection, docs, params=None, **kwargs):
+    def index(self, collection, docs, params=None, min_rf=None, **kwargs):
         """
         :param str collection: The name of the collection for the request.
         :param docs list docs: List of dicts. ex: [{"title": "testing solr indexing", "id": "test1"}]
+        :param min_rf int min_rf: Required number of replicas to write to'
 
         Sends supplied list of dicts to solr for indexing.  ::
 
@@ -139,12 +141,13 @@ class SolrClient:
 
         """
         data = json.dumps(docs)
-        return self.index(collection, data, params, **kwargs)
+        return self.index_json(collection, data, params, min_rf=min_rf, **kwargs)
 
-    def index_json(self, collection, data, params=None, **kwargs):
+    def index_json(self, collection, data, params=None, min_rf=None, **kwargs):
         """
         :param str collection: The name of the collection for the request.
         :param data str data: Valid Solr JSON as a string. ex: '[{"title": "testing solr indexing", "id": "test1"}]'
+        :param min_rf int min_rf: Required number of replicas to write to'
 
         Sends supplied json to solr for indexing, supplied JSON must be a list of dictionaries.  ::
 
@@ -161,8 +164,12 @@ class SolrClient:
                                                     collection=collection,
                                                     data=data,
                                                     params=params,
+                                                    min_rf=min_rf,
                                                     **kwargs)
-
+        if min_rf is not None:
+            rf = resp['responseHeader']['rf']
+            if rf < min_rf:
+                raise MinRfError("couldn't satisfy rf:%s min_rf:%s" % (rf, min_rf), rf=rf, min_rf=min_rf)
         if resp['responseHeader']['status'] == 0:
             return True
         return False
@@ -186,7 +193,6 @@ class SolrClient:
             return resp['doc']
         raise NotFoundError
 
-
     def mget(self, collection, doc_ids, **kwargs):
         """
         :param str collection: The name of the collection for the request
@@ -205,7 +211,6 @@ class SolrClient:
         if 'docs' in resp['response']:
             return resp['response']['docs']
         raise NotFoundError
-
 
     def delete_doc_by_id(self, collection, doc_id, **kwargs):
         """
