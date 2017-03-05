@@ -319,10 +319,9 @@ class IndexQ():
             if hasattr(collection, '__call__'):
                 self.logger.debug("Overwriting send_method to index_json")
                 method = getattr(solr, 'index_json')
-                method = partial(self._wrap_dynamic, method, collection, )
+                method = partial(self._wrap_dynamic, method, collection)
             else:
-                method = partial(self._wrap, method, collection, self)
-
+                method = partial(self._wrap, method, collection)
             with ThreadPool(threads) as p:
                 p.map(method, self.get_todo_items())
         else:
