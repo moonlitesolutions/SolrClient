@@ -6,11 +6,23 @@ SolrClient 0.2.0
 ----------
 SolrClient is a simple python library for Solr; built in python3 with support for latest features of Solr 5 and 6. Development is heavily focused on indexing as well as parsing various query responses and returning them in native python data structures. Several helper classes will be built to automate querying and management of Solr clusters.
 
+Enhancements in version 0.2.0:
+* Basic parsing for json.facet output
+* Better support for grouped results (SolrResponse)
+* Other minor enhancements to SolrClient
+* Fixed SolrClient.index method
+
+Planned enhancements in version 0.3.0:
+* Solr node query routing (by @ddorian)
+* Streaming Expressions Support
+*
+
 Requirements
 ----------
 * python 3.3+
 * requests library (http://docs.python-requests.org/en/latest/)
 * Solr
+* kazoo for working with zookeeper (optional)
 
 
 Features
