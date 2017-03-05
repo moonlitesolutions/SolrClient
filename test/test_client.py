@@ -158,6 +158,20 @@ class ClientTestIndexing(unittest.TestCase):
         self.delete_docs()
         self.commit()
 
+
+    def test_indexing(self):
+        self.docs = self.rand_docs.get_docs(53)
+        self.solr.index(test_config['SOLR_COLLECTION'], self.docs)
+        self.commit()
+        for doc in self.docs:
+            logging.debug("Checking {}".format(doc['id']))
+            self.assertEqual(
+                self.solr.query(test_config['SOLR_COLLECTION'], {'q': 'id:{}'.format(doc['id'])}).get_num_found(), 1)
+        logging.info(self.solr.transport._action_log)
+        self.delete_docs()
+        self.commit()
+
+
     def test_index_json_file(self):
         self.docs = self.rand_docs.get_docs(55)
         with open('temp_file.json', 'w') as f:

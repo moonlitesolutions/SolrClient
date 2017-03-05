@@ -8,6 +8,7 @@ from .test_config import test_config
 from .RandomTestData import RandomTestData
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s [%(levelname)s] (%(process)d) (%(threadName)-10s) [%(name)s] %(message)s')
 logging.disable(logging.CRITICAL)
+
 class ClientTestQuery(unittest.TestCase):
 
     @classmethod
@@ -106,6 +107,7 @@ class ClientTestQuery(unittest.TestCase):
                 out[doc['facet_test']][doc['price']]+=1
         self.assertDictEqual(out,res.get_facet_pivot()['facet_test,price'])
 
+
     def test_get_field_values_as_list(self):
         res = self.solr.query(test_config['SOLR_COLLECTION'],{
             'q':'*:*',
@@ -118,19 +120,115 @@ class ClientTestQuery(unittest.TestCase):
                 temp.append(doc['product_name_exact'])
         self.assertEqual(results,temp)
 
+
     def test_get_facet_values_as_list(self):
         r = self.solr.query(test_config['SOLR_COLLECTION'],{
             'q':'*:*',
             'facet':'true',
+            'facet.limit': -1,
             'facet.field':'facet_test',
         })
-'''
-from SolrClient import SolrClient
-solr = SolrClient('http://localhost:7050/solr')
-r = solr.query('SolrClient_unittest',{
-            'q':'*:*',
-            'facet':'true',
-            'facet.field':'facet_test',
+        self.assertEqual(
+            sorted(r.data['facet_counts']['facet_fields']['facet_test'][1::2]),
+            sorted(r.get_facet_values_as_list('facet_test'))
+        )
+
+    def test_grouped_count_1(self):
+        '''
+        Get a dict of grouped docs
+        '''
+        r = self.solr.query(test_config['SOLR_COLLECTION'],{
+            'q': '*:*',
+            'group': True,
+            'group.field': 'id',
+            'group.ngroups': True,
         })
-r.get_facet_values_as_list('facet_test')
-'''
+        self.assertEqual(r.get_ngroups(), 50)
+        self.assertEqual(r.get_ngroups('id'), 50)
+
+
+    def test_grouped_docs(self):
+        '''
+        Get a dict of grouped docs
+        '''
+        r = self.solr.query(test_config['SOLR_COLLECTION'],{
+            'q': '*:*',
+            'group': True,
+            'group.field': 'id',
+            'group.ngroups': True,
+        })
+        self.assertEqual(len(r.docs), 10)
+        self.assertTrue('doclist' in r.docs[0])
+
+    def test_grouped_docs(self):
+        '''
+        Get a dict of grouped docs
+        '''
+        r = self.solr.query(test_config['SOLR_COLLECTION'],{
+            'q': '*:*',
+            'group': True,
+            'group.field': 'id',
+            'group.ngroups': True,
+        })
+        self.assertEqual(len(r.docs), 10)
+        self.assertTrue('doclist' in r.docs[0])
+
+
+    def test_flat_groups(self):
+        '''
+        Get a dict of grouped docs
+        '''
+        r = self.solr.query(test_config['SOLR_COLLECTION'],{
+            'q': '*:*',
+            'group': True,
+            'group.field': 'id'
+             })
+        flats = r.get_flat_groups()
+        self.assertEqual(len(flats), 10)
+        self.assertTrue('date' in flats[0])
+
+    def test_json_facet(self):
+        '''
+        Get a dict of grouped docs
+        '''
+        #Just lazy getting a new response object
+        r = self.solr.query(test_config['SOLR_COLLECTION'],{ 'q': '*:*'})
+
+        a = r.get_jsonfacet_counts_as_dict('test',
+                {'count': 50,
+                  'test': {'buckets': [{'count': 10,
+                     'pr': {'buckets': [
+                       {'count': 2, 'unique': 1, 'val': 79},
+                       {'count': 1, 'unique': 1, 'val': 9}]},
+                     'pr_sum': 639.0,
+                     'val': 'consectetur'},
+                    {'count': 8,
+                     'pr': {'buckets': [
+                       {'count': 1, 'unique': 1, 'val': 9},
+                       {'count': 1, 'unique': 1, 'val': 31},
+                       {'count': 1, 'unique': 1, 'val': 33},]},
+                     'pr_sum': 420.0,
+                     'val': 'auctor'},
+                    {'count': 8,
+                     'pr': {'buckets': [
+                       {'count': 2, 'unique': 1, 'val': 94},
+                       {'count': 1, 'unique': 1, 'val': 25},
+                       ]},
+                     'pr_sum': 501.0,
+                     'val': 'nulla'}]}})
+
+        b =  {'test': {'auctor': {'count': 8,
+                     'pr': {9: {'count': 1, 'unique': 1},
+                            31: {'count': 1, 'unique': 1},
+                            33: {'count': 1, 'unique': 1}},
+                     'pr_sum': 420.0},
+          'consectetur': {'count': 10,
+                          'pr': {9: {'count': 1, 'unique': 1},
+                                 79: {'count': 2, 'unique': 1}},
+                          'pr_sum': 639.0},
+          'nulla': {'count': 8,
+                    'pr': {25: {'count': 1, 'unique': 1},
+                           94: {'count': 2, 'unique': 1}},
+                    'pr_sum': 501.0}}}
+
+        self.assertEqual(a, b)

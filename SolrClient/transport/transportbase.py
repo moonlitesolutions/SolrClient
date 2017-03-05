@@ -8,14 +8,16 @@ class TransportBase():
     Base Transport Class
     """
 
-    def __init__(self, solr, auth=(None, None), devel=None, host=None, router=PlainRouter, **kwargs):
+    #def __init__(self, solr, auth=(None, None), devel=None, host=None, router=PlainRouter, **kwargs):
+    def __init__(self, solr, auth=(None, None), devel=None, host=None, **kwargs):
         self.logger = logging.getLogger(str(__package__))
         self.auth = auth
+        self.host = host if type(host) is list else [host]
         self._devel = devel
         self._action_log = []
         self._action_log_count = 1000
         self.solr = solr
-        self.router = router(self, host, **kwargs)
+        #self.router = router(self, host, **kwargs)
         self.setup()
 
     def _add_to_action(self, action):
@@ -31,7 +33,8 @@ class TransportBase():
 
         def inner(self, **kwargs):
             last_exception = None
-            for host in self.router.get_hosts(**kwargs):
+            #for host in self.router.get_hosts(**kwargs):
+            for host in self.host:
                 try:
                     return function(self, host, **kwargs)
                 except SolrError as e:

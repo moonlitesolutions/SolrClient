@@ -2,7 +2,7 @@ import json
 from .exceptions import *
 
 class SolrResponse:
-    def __init__(self,data):
+    def __init__(self, data):
         self.data = data
         self.query_time = data['responseHeader']['QTime']
         self.header = data['responseHeader']
@@ -12,17 +12,18 @@ class SolrResponse:
             self.docs = data['response']['docs']
             if 'numFound' in data['response']:
                 self.num_found = data['response']['numFound']
+
         elif 'grouped' in data:
             self.groups = {}
             self.grouped = True
             for field in data['grouped']:
-                self.groups[field + '_ngroups'] = data['grouped'][field]['ngroups']
-                self.groups[field + '_matches'] = data['grouped'][field]['matches']
+                #For backwards compatability
+                self.groups = data['grouped'][field]['groups']
                 self.docs = data['grouped'][field]['groups']
         else:
             self.grouped = False
             self.docs = {}
-        
+
 
     def get_num_found(self):
         '''
@@ -35,9 +36,12 @@ class SolrResponse:
             })
             >>> res.get_num_found()
             50
-
         '''
-        return self.num_found
+        try:
+            return self.num_found
+        except AttributeError:
+            raise AttributeError("num_found not found in response, make sure you aren't running this on a grouped query. ")
+
 
     def get_results_count(self):
         '''
@@ -53,10 +57,53 @@ class SolrResponse:
             10
             >>> res.get_num_found()
             50
-
         '''
-
         return len(self.docs)
+
+
+    def _determine_group_field(self, field=None):
+        if not field:
+            if len(list(self.data['grouped'].keys())) > 1:
+                raise AttributeError("More than one grouped field in response, specify field to get count for. ")
+            elif len(list(self.data['grouped'].keys())) == 1:
+                field = list(self.data['grouped'].keys())[0]
+            else:
+                raise ValueError("Unable to determine what field to retrieve count for. Specify just to be sure.")
+        return field
+
+
+    def get_ngroups(self, field=None):
+        '''
+        Returns ngroups count if it was specified in the query, otherwise ValueError.
+
+        If grouping on more than one field, provide the field argument to specify which count you are looking for.
+        '''
+        field = field if field else self._determine_group_field(field)
+        if 'ngroups' in self.data['grouped'][field]:
+            return self.data['grouped'][field]['ngroups']
+        raise ValueError("ngroups not found in response. specify group.ngroups in the query.")
+
+
+    def get_groups_count(self, field=None):
+        '''
+        Returns 'matches' from group response.
+
+                If grouping on more than one field, provide the field argument to specify which count you are looking for.
+        '''
+        field = field if field else self._determine_group_field(field)
+        if 'matches' in self.data['grouped'][field]:
+            return self.data['grouped'][field]['matches']
+        raise ValueError("group matches not found in response")
+
+
+    def get_flat_groups(self, field=None):
+        '''
+        Flattens the group response and just returns a list of documents.
+        '''
+        field = field if field else self._determine_group_field(field)
+        temp_groups = self.data['grouped'][field]['groups']
+        return [y for x in temp_groups for y in x['doclist']['docs']]
+
 
     def get_facets(self):
         '''
@@ -96,6 +143,7 @@ class SolrResponse:
             return self.data['nextCursorMark']
         else:
             raise SolrResponseError("No Cursor Mark in the Response")
+
 
     def get_facets_ranges(self):
         '''
@@ -217,7 +265,7 @@ class SolrResponse:
     '''
 
 
-    def get_first_field_values_as_list(self,field):
+    def get_first_field_values_as_list(self, field):
         '''
         :param str field: The name of the field for lookup.
 
@@ -228,7 +276,7 @@ class SolrResponse:
                 return doc[field]
         raise SolrResponseError("No field in result set")
 
-    def get_facet_values_as_list(self,field):
+    def get_facet_values_as_list(self, field):
         '''
         :param str field: Name of facet field to retrieve values from.
 
@@ -276,3 +324,82 @@ class SolrResponse:
         Returns json from the original response.
         '''
         return json.dumps(self.data)
+
+
+    def json_facet(self, field=None):
+        '''
+        EXPERIMENTAL
+
+        Tried to kick back the json.fact output.
+        '''
+        facets = self.data['facets']
+        if field is None:
+            temp_fields = [x for x in facets.keys() if x != 'count']
+            if len(temp_fields) != 1:
+                raise ValueError("field argument not specified and it looks like there is more than one field in facets. Specify the field to get json.facet from. ")
+            field = temp_fields[0]
+
+        if field not in self.data['facets']:
+            raise ValueError("Facet Field {} Not found in response, available fields are {}".format(
+                                        field, self.data['facets'].keys() ))
+        return self.data['facets'][field]
+
+    def get_jsonfacet_counts_as_dict(self, field, data=None):
+        '''
+        EXPERIMENTAL
+        Takes facets and returns then as a dictionary that is easier to work with,
+        for example, if you are getting something this::
+
+            {'facets': {'count': 50,
+              'test': {'buckets': [{'count': 10,
+                 'pr': {'buckets': [{'count': 2, 'unique': 1, 'val': 79},
+                   {'count': 1, 'unique': 1, 'val': 9}]},
+                 'pr_sum': 639.0,
+                 'val': 'consectetur'},
+                {'count': 8,
+                 'pr': {'buckets': [{'count': 1, 'unique': 1, 'val': 9},
+                   {'count': 1, 'unique': 1, 'val': 31},
+                   {'count': 1, 'unique': 1, 'val': 33}]},
+                 'pr_sum': 420.0,
+                 'val': 'auctor'},
+                {'count': 8,
+                 'pr': {'buckets': [{'count': 2, 'unique': 1, 'val': 94},
+                   {'count': 1, 'unique': 1, 'val': 25}]},
+                 'pr_sum': 501.0,
+                 'val': 'nulla'}]}}}
+
+
+        This should return you something like this::
+
+            {'test': {'auctor': {'count': 8,
+                                 'pr': {9: {'count': 1, 'unique': 1},
+                                        31: {'count': 1, 'unique': 1},
+                                        33: {'count': 1, 'unique': 1}},
+                                 'pr_sum': 420.0},
+                      'consectetur': {'count': 10,
+                                      'pr': {9: {'count': 1, 'unique': 1},
+                                             79: {'count': 2, 'unique': 1}},
+                                      'pr_sum': 639.0},
+                      'nulla': {'count': 8,
+                                'pr': {25: {'count': 1, 'unique': 1},
+                                       94: {'count': 2, 'unique': 1}},
+                                'pr_sum': 501.0}}}
+        '''
+        data = data if data else self.data['facets']
+        if field not in data:
+            return ValueError("Field To start Faceting on not specified.")
+        out = { field: self._json_rec_dict(data[field]['buckets']) }
+        return out
+
+
+    def _json_rec_dict(self, buckets):
+        out = {}
+        for bucket in buckets:
+            out[bucket['val']] = {}
+            out[bucket['val']]['count'] = bucket['count']
+            for field in [x for x in bucket if x not in ['val']]:
+                if type(bucket[field]) is dict and 'buckets' in bucket[field]:
+                    out[bucket['val']][field] = self._json_rec_dict(bucket[field]['buckets'])
+                else:
+                    out[bucket['val']][field] = bucket[field]
+        return out
