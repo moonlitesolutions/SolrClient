@@ -29,6 +29,8 @@ class TransportRequests(TransportBase):
             params = {}
         # put each kwarg into the params, like min_rf, _route_ etc
         params.update(wt='json', indent=False, **kwargs)
+        if not host.endswith('/'):
+            host += '/'
         for field in params:
             if type(params[field]) is bool:
                 params[field] = str(params[field]).lower()
