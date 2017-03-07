@@ -387,7 +387,7 @@ class SolrResponse:
         '''
         data = data if data else self.data['facets']
         if field not in data:
-            return ValueError("Field To start Faceting on not specified.")
+            raise ValueError("Field To start Faceting on not specified.")
         out = { field: self._json_rec_dict(data[field]['buckets']) }
         return out
 
