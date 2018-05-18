@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import json
 from .exceptions import *
 
@@ -128,7 +130,7 @@ class SolrResponse:
                     for facetfield in data['facet_counts']['facet_fields']:
                         if type(data['facet_counts']['facet_fields'][facetfield] == list):
                             l = data['facet_counts']['facet_fields'][facetfield]
-                            self.facets[facetfield] = dict(zip(l[::2],l[1::2]))
+                            self.facets[facetfield] = OrderedDict(zip(l[::2],l[1::2]))
                 return self.facets
             else:
                 raise SolrResponseError("No Facet Information in the Response")
@@ -169,7 +171,7 @@ class SolrResponse:
                     for facetfield in data['facet_counts']['facet_ranges']:
                         if type(data['facet_counts']['facet_ranges'][facetfield]['counts']) == list:
                             l = data['facet_counts']['facet_ranges'][facetfield]['counts']
-                            self.facet_ranges[facetfield] = dict(zip(l[::2],l[1::2]))
+                            self.facet_ranges[facetfield] = OrderedDict(zip(l[::2],l[1::2]))
                     return self.facet_ranges
             else:
                 raise SolrResponseError("No Facet Ranges in the Response")
