@@ -4,11 +4,11 @@ Please include unit tests for all new functionality and bug fixes. Due to variou
 I chose to test against a real Solr instance instead of mocking one. I like to test with multiple version of Solr as well.
 
 If you want to test your contribution do the following:
-1. Download this project
+1. Download the [SolrVagrant](https://github.com/moonlitesolutions/SolrVagrant) project
 2. Edit the `Vagrantfile`, find this line and replace it with your branch:
 
-		ansible.raw_arguments  = [
-      	'--extra-vars "git_repo=https://github.com/nickvasilyev/SolrClient.git"'
+	ansible.raw_arguments  = [
+      		'--extra-vars "git_repo=https://github.com/nickvasilyev/SolrClient.git"'
     	]
 
 2. run `vagrant up` to kick off the installation / configuration. It will take a while.
