@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import unittest
 import logging
 import json
@@ -51,6 +52,7 @@ class ClientTestQuery(unittest.TestCase):
                 local_facets[doc['facet_test']] = 1
         try:
             self.assertDictEqual(local_facets,r.get_facets()['facet_test'])
+            self.assertIsInstance(r.get_facets()['facet_test'], OrderedDict)
         except Exception as e:
             logging.info("local")
             logging.info(local_facets)
@@ -90,6 +92,7 @@ class ClientTestQuery(unittest.TestCase):
         for k,g in itertools.groupby(sorted(prices),div):
             out[k] = len(list(g)) or 0
         self.assertDictEqual(out,res.get_facets_ranges()['price'])
+        self.assertIsInstance(res.get_facet_rangess()['price'], OrderedDict)
 
     def test_facet_pivot(self):
         res = self.solr.query(test_config['SOLR_COLLECTION'],{
