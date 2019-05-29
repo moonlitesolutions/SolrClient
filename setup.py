@@ -14,6 +14,6 @@ setup(
     description = "Python based client for Solr. ",
     install_requires = [
         "requests>=2.2.1",
-        "kazoo==2.2.1",
+        "kazoo==2.6.1",
     ]
 )
