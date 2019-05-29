@@ -7,4 +7,4 @@ from .collections import Collections
 from .zk import ZK
 #This is the main project version. On new releases, it only needs to be updated here and in the README.md.
 #Documentation and setup.py will pull from here.
-__version__ = '0.2.0'
+__version__ = '0.3.0'
