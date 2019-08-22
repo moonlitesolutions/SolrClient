@@ -47,7 +47,7 @@ class TransportRequests(TransportBase):
         # Some code used from ES python client.
         start = time.time()
         try:
-            res = self.session.request(method, url, params=params, data=data, headers=headers)
+            res = self.session.request(method, url, params=params, data=data, headers=headers, verify=False)
             duration = time.time() - start
             self.logger.debug("Request Completed in {} Seconds".format(round(duration, 2)))
         except requests.exceptions.SSLError as e:
