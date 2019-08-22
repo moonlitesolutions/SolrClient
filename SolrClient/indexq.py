@@ -29,11 +29,12 @@ class IndexQ():
     '''
 
     def __init__(self, basepath, queue, compress=False, compress_complete=False, size=0, devel=False,
-                 threshold=0.90, log=None, rotate_complete=None, **kwargs ):
+                 threshold=0.90, log=None, rotate_complete=None, remove_complete=False, **kwargs ):
         '''
         :param string basepath: Path to the root of the indexQ. All other queues will get created underneath this.
         :param string queue: Name of the queue.
         :param log: Logging instance that you want it to log to.
+        :param remove_complete: Will remove completed/loaded files from disk. This supercedes all other complete file management parameters below. 
         :param rotate_complete: Supply a callable that will be used to store completed files. Completed files will be moved to /done/`callable_output`/.
         :param bool compress: If todo files should be compressed, set to True if there is going to be a lot of data and these files will be sitting there for a while.
         :param bool compress: If done files should be compressed, set to True if there is going to be a lot of data and these files will be sitting there for a while.
@@ -58,6 +59,7 @@ class IndexQ():
         self._locked = False
         self._rlock = threading.RLock()
         self.rotate_complete = rotate_complete
+        self.remove_complete = remove_complete
         #Lock File
         self._lck = os.path.join(self._qpathdir,'index.lock')
 
@@ -244,6 +246,17 @@ class IndexQ():
         if not os.path.exists(filepath):
             raise FileNotFoundError("Can't Complete {}, it doesn't exist".format(filepath))
         if self._devel: self.logger.debug("Completing - {} ".format(filepath))
+        if self.remove_complete:
+            # supercedes other _complete options
+            try:
+                os.remove(filepath)
+                self.logger.debug("successfully removed complete file {}".format(filepath))
+                return filepath
+            except Exception as e:
+                self.logger.error("removing _complete {} file failed with the following exception.".format(filepath))
+                self.logger.exception(e)
+                raise
+
         if self.rotate_complete:
             try:
                 complete_dir = str(self.rotate_complete())
