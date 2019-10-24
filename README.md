@@ -1,7 +1,7 @@
 [![Documentation Status](https://readthedocs.org/projects/solrclient/badge/?version=latest)](http://solrclient.readthedocs.org/en/latest/?badge=latest)
 
 # SolrClient
-SolrClient 0.2.1
+SolrClient 0.2.2
 ----------
 SolrClient is a simple python library for Solr; built in python3 with support for latest features of Solr 5 and 6. Development is heavily focused on indexing as well as parsing various query responses and returning them in native python data structures. Several helper classes will be built to automate querying and management of Solr clusters.
 
