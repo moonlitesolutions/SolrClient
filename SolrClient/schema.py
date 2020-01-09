@@ -1,6 +1,7 @@
 import logging
 import json
 from .exceptions import *
+
 class Schema():
     '''
         Class for interacting with Solr collections that are using data driven schemas.
@@ -65,7 +66,7 @@ class Schema():
         res, con_info = self.solr.transport.send_request(method='POST', endpoint=self.schema_endpoint,
                                                          collection=collection, data=json.dumps(temp))
         return res
-    
+
 
     def delete_field(self,collection,field_name):
         '''
@@ -90,7 +91,7 @@ class Schema():
         :param string field_name: String name of the field.
         '''
         schema = self.get_schema_fields(collection)
-        logging.info(schema)
+        self.logger.debug(schema)
         return True if field_name in [field['name'] for field in schema['fields']] else False
 
     def create_copy_field(self,collection,copy_dict):
@@ -130,4 +131,52 @@ class Schema():
             self.logger.info("Fieldset not in Solr Copy Fields: {}".format(str(copy_dict)))
         temp = {"delete-copy-field": dict(copy_dict)}
         res, con_info = self.solr.transport.send_request(method='POST',endpoint=self.schema_endpoint,collection=collection, data=json.dumps(temp))
+        return res
+
+    def get_schema_field_types(self, collection):
+        '''
+        Returns Schema Field Type definitions from a Solr Collection
+        '''
+        res, con_info = self.solr.transport.send_request(endpoint='schema/fieldtypes',
+                                                         collection=collection)
+        return res
+
+    def create_field_type(self, collection, field_dict):
+        '''Creates a new field type in managed schema.
+
+        field_dict should be structured like this::
+
+            {
+                "name":"myNewTxtField",
+                "class":"solr.TextField",
+                "positionIncrementGap":"100",
+                "analyzer" : {
+                    "charFilters":[{
+                       "class":"solr.PatternReplaceCharFilterFactory",
+                       "replacement":"$1$1",
+                       "pattern":"([a-zA-Z])\\\\1+"
+                    }],
+                "tokenizer":{
+                   "class":"solr.WhitespaceTokenizerFactory" },
+                    "filters":[{
+                       "class":"solr.WordDelimiterFilterFactory",
+                       "preserveOriginal":"0"
+                       }]
+            }
+        '''
+        field_opts = {"add-field-type": dict(field_dict)}
+        res, con_info = self.solr.transport.send_request(method='POST',
+            endpoint=self.schema_endpoint, collection=collection,
+            data=json.dumps(field_opts))
+        return res
+
+    def replace_field_type(self, collection, field_dict):
+        '''Replace an existing field type in a managed schema.
+
+        field_dict should be structured as in :meth:`create_field_type`
+        '''
+        field_opts = {"replace-field-type": dict(field_dict)}
+        res, con_info = self.solr.transport.send_request(method='POST',
+            endpoint=self.schema_endpoint, collection=collection,
+            data=json.dumps(field_opts))
         return res

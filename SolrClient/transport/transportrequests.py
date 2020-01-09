@@ -9,7 +9,6 @@ except ImportError:
     req = False
 
 
-
 class TransportRequests(TransportBase):
     """
     Class that Uses Requests as Transport Mechanism.
@@ -21,6 +20,9 @@ class TransportRequests(TransportBase):
         self.session = requests.session()
         if self.auth and self.auth != (None, None):
             self.session.auth = (self.auth[0], self.auth[1])
+
+    def __del__(self):
+        self.session.close()
 
     def _send(self, host, method='GET', endpoint=None, collection=None, params=None, headers=None, data=None, **kwargs):
         if endpoint is None:
